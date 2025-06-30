@@ -1,4 +1,7 @@
-const { Player, createPlayer } = require('./players.js');
+const { Player, createPlayer } = require('./player.js');
+const { getRandomDoggoCards } = require('./doggoCards.js');
+const { StoreTypes } = require('./storeTypes.js');
+const { Store } = require('./store.js');
 
 /**
  * Game status enum
@@ -24,11 +27,11 @@ class Game {
         this.npcDoggos = {                      // NPC doggo cards management
             visible: [],                        // Up to 4 visible NPC doggo cards
             discardPile: [],                    // Discarded NPC doggo cards
-            drawPile: []                        // NPC doggo cards to draw from
+            drawPile: [],                       // NPC doggo cards to draw from
+            extraMoney: [0, 0, 0, 0]            // Extra money attached to the 4 visible doggo cards
         };
         this.storeMarket = {                    // Store cards management
             visible: [],                        // Up to 4 visible store cards
-            discardPile: [],                    // Discarded store cards
             drawPile: []                        // Store cards to draw from
         };
         this.turnNumber = 0;                    // Current turn number
@@ -39,10 +42,10 @@ class Game {
      * Add a player to the game
      * @param {string} playerId - Unique player identifier
      * @param {string} playerName - Player's display name
-     * @param {string} avatarPath - Path to player's avatar image
+     * @param {string} avatar - Path to player's avatar image
      * @returns {boolean} - True if player was added successfully
      */
-    addPlayer(playerId, playerName, avatarPath) {
+    addPlayer(playerId, playerName, avatar) {
         if (this.players[playerId]) {
             return false; // Player already exists
         }
@@ -51,7 +54,7 @@ class Game {
             return false; // Game is full
         }
 
-        const player = createPlayer(playerId, playerName, avatarPath);
+        const player = createPlayer(playerId, playerName, avatar);
         this.players[playerId] = player;
         this.playerOrder.push(playerId);
 
@@ -186,17 +189,53 @@ class Game {
      */
     initializeCardPiles() {
         // Initialize NPC doggo cards
-        this.npcDoggos.drawPile = []; // Would be populated with actual doggo cards
         this.npcDoggos.visible = [];
         this.npcDoggos.discardPile = [];
 
         // Initialize store market cards
-        this.storeMarket.drawPile = []; // Would be populated with actual store cards
         this.storeMarket.visible = [];
-        this.storeMarket.discardPile = [];
 
+        this.initializeDoggoCards();
+        this.initializeStoreCards();
         // Draw initial visible cards
         this.drawVisibleCards();
+    }
+
+    initializeDoggoCards() {
+        this.npcDoggos.drawPile = getRandomDoggoCards(6);
+    }
+
+    initializeStoreCards() {
+        this.storeMarket.drawPile = this.setUpRandomStoreCards();
+    }
+    
+    // TODO: Modify to use actual store cards when we have them
+    setUpRandomStoreCards() {
+        const storeTypes = Object.values(StoreTypes);
+        const storeCards = [];
+
+        // Create 3 store objects for each type
+        storeTypes.forEach(type => {
+            for (let i = 0; i < 3; i++) {
+                storeCards.push(new Store(type, `${type}_${i}`));
+            }
+        });
+
+        // Shuffle the store cards into random order
+        for (let i = storeCards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [storeCards[i], storeCards[j]] = [storeCards[j], storeCards[i]];
+        }
+
+        return storeCards;
+    }
+
+    drawStoreCard() {
+        if (this.storeMarket.drawPile.length === 0) {
+            return null;
+        }
+        const card = this.storeMarket.drawPile.pop();
+        return card;
     }
 
     /**
@@ -214,68 +253,6 @@ class Game {
             const card = this.storeMarket.drawPile.pop();
             this.storeMarket.visible.push(card);
         }
-    }
-
-    /**
-     * Get a visible NPC doggo card by index
-     * @param {number} index - Index of the card (0-3)
-     * @returns {Object|null} - Card object or null if not found
-     */
-    getVisibleNpcDoggo(index) {
-        return this.npcDoggos.visible[index] || null;
-    }
-
-    /**
-     * Get a visible store card by index
-     * @param {number} index - Index of the card (0-3)
-     * @returns {Object|null} - Card object or null if not found
-     */
-    getVisibleStore(index) {
-        return this.storeMarket.visible[index] || null;
-    }
-
-    /**
-     * Remove a visible NPC doggo card and replace it
-     * @param {number} index - Index of the card to remove
-     * @returns {Object|null} - Removed card or null if not found
-     */
-    removeVisibleNpcDoggo(index) {
-        if (index < 0 || index >= this.npcDoggos.visible.length) {
-            return null;
-        }
-
-        const removedCard = this.npcDoggos.visible.splice(index, 1)[0];
-        this.npcDoggos.discardPile.push(removedCard);
-
-        // Draw a new card if available
-        if (this.npcDoggos.drawPile.length > 0) {
-            const newCard = this.npcDoggos.drawPile.pop();
-            this.npcDoggos.visible.push(newCard);
-        }
-
-        return removedCard;
-    }
-
-    /**
-     * Remove a visible store card and replace it
-     * @param {number} index - Index of the card to remove
-     * @returns {Object|null} - Removed card or null if not found
-     */
-    removeVisibleStore(index) {
-        if (index < 0 || index >= this.storeMarket.visible.length) {
-            return null;
-        }
-
-        const removedCard = this.storeMarket.visible.splice(index, 1)[0];
-        this.storeMarket.discardPile.push(removedCard);
-
-        // Draw a new card if available
-        if (this.storeMarket.drawPile.length > 0) {
-            const newCard = this.storeMarket.drawPile.pop();
-            this.storeMarket.visible.push(newCard);
-        }
-
-        return removedCard;
     }
 
     /**
@@ -301,7 +278,6 @@ class Game {
             },
             storeMarket: {
                 visible: this.storeMarket.visible,
-                discardPileCount: this.storeMarket.discardPile.length,
                 drawPileCount: this.storeMarket.drawPile.length
             }
         };
@@ -325,6 +301,63 @@ class Game {
             createdAt: this.createdAt
         };
     }
+
+    sellStoreCardToPlayer(playerId, storeIndex) {
+        const player = this.players[playerId];
+        if (!player) {
+            return false;
+        }
+        if (storeIndex < 0 || storeIndex >= this.storeMarket.visible.length) {
+            return false;
+        }
+        const store = this.storeMarket.visible[storeIndex];
+        if (!player.acquireStoreCard(store)) {
+            return false;
+        }
+        this.storeMarket.visible.splice(storeIndex, 1);
+        return true;
+    }
+    
+    replaceStoreCard(playerId, storeIndex) {
+        const player = this.players[playerId];
+        if (!player) {
+            return false;
+        }
+        if (storeIndex < 0 || storeIndex >= player.storeCards.length) {
+            return false;
+        }
+        const newStore = this.drawStoreCard();
+        if (!newStore) {
+            return false;
+        }
+        player.storeCards[storeIndex] = newStore;
+        return true;
+    }
+
+    assignDoggoCardToPlayer(playerId, doggoIndex) {
+        const player = this.players[playerId];
+        if (!player) {
+            return false;
+        }
+        if (doggoIndex < 0 || doggoIndex >= this.npcDoggos.visible.length) {
+            return false;
+        }
+        if (doggoIndex > 0) {
+            const cost = ((doggoIndex + 1) * doggoIndex) / 2;
+            if (player.getNetWorth() < cost) {
+                return false;
+            }
+            player.removeMoney(cost);
+            for (let i = 0; i < doggoIndex; i++) {
+                this.npcDoggos.extraMoney[i] += i + 1;
+            }
+        }
+        const doggo = this.npcDoggos.visible[doggoIndex];
+        if (!player.acquireDoggoCard(doggo)) {
+            return false;
+        }
+    }
+
 }
 
 /**

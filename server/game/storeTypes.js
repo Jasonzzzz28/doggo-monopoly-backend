@@ -1,5 +1,5 @@
-const stores = [
-    {
+const StoreTypes = {
+    TOY_SHOP: {
         type: "toy-shop",
         name: "Toy Shop",
         description: "A fun store filled with squeaky toys and interactive games",
@@ -10,7 +10,7 @@ const stores = [
         icon: "fas fa-store",
         image: "toy-shop.jpg"
     },
-    {
+    GROOMING_SPA: {
         type: "grooming-spa",
         name: "Grooming Spa",
         description: "A luxurious spa for pampering and grooming services",
@@ -21,7 +21,7 @@ const stores = [
         icon: "fas fa-spa",
         image: "grooming-spa.jpg"
     },
-    {
+    BONE_BAKERY: {
         type: "bone-bakery",
         name: "Bone Bakery",
         description: "A bakery specializing in fresh-baked dog treats and bones",
@@ -32,7 +32,7 @@ const stores = [
         icon: "fas fa-bone",
         image: "bone-bakery.jpg"
     },
-    {
+    DOG_PARK: {
         type: "dog-park",
         name: "Dog Park",
         description: "An outdoor park with agility equipment and play areas",
@@ -43,7 +43,7 @@ const stores = [
         icon: "fas fa-paw",
         image: "dog-park.jpg"
     },
-    {
+    TREAT_CAFE: {
         type: "treat-cafe",
         name: "Treat Cafe",
         description: "A cozy cafe serving gourmet dog treats and refreshments",
@@ -54,7 +54,7 @@ const stores = [
         icon: "fas fa-utensils",
         image: "treat-cafe.jpg"
     },
-    {
+    VET_CLINIC: {
         type: "vet-clinic",
         name: "Vet Clinic",
         description: "A medical clinic providing health care and check-ups",
@@ -65,7 +65,7 @@ const stores = [
         icon: "fas fa-stethoscope",
         image: "vet-clinic.jpg"
     },
-    {
+    TRAINING_CENTER: {
         type: "training-center",
         name: "Training Center",
         description: "A facility for obedience training and behavior classes",
@@ -76,7 +76,7 @@ const stores = [
         icon: "fas fa-graduation-cap",
         image: "training-center.jpg"
     },
-    {
+    PET_HOTEL: {
         type: "pet-hotel",
         name: "Pet Hotel",
         description: "A luxury hotel for overnight stays and boarding",
@@ -87,7 +87,7 @@ const stores = [
         icon: "fas fa-bed",
         image: "pet-hotel.jpg"
     },
-    {
+    SWIMMING_POOL: {
         type: "swimming-pool",
         name: "Swimming Pool",
         description: "An indoor pool for swimming lessons and water fun",
@@ -98,7 +98,7 @@ const stores = [
         icon: "fas fa-swimming-pool",
         image: "swimming-pool.jpg"
     },
-    {
+    PHOTOGRAPHY_STUDIO: {
         type: "photography-studio",
         name: "Photography Studio",
         description: "A studio for professional pet photography sessions",
@@ -109,7 +109,7 @@ const stores = [
         icon: "fas fa-camera",
         image: "photography-studio.jpg"
     },
-    {
+    ICE_CREAM_PARLOR: {
         type: "ice-cream-parlor",
         name: "Ice Cream Parlor",
         description: "A sweet shop serving dog-friendly ice cream and frozen treats",
@@ -120,7 +120,7 @@ const stores = [
         icon: "fas fa-ice-cream",
         image: "ice-cream-parlor.jpg"
     },
-    {
+    ADVENTURE_GEAR: {
         type: "adventure-gear",
         name: "Adventure Gear",
         description: "A store selling hiking gear, backpacks, and outdoor equipment",
@@ -131,6 +131,6 @@ const stores = [
         icon: "fas fa-hiking",
         image: "adventure-gear.jpg"
     }
-];
+};
 
-module.exports = stores;
+module.exports = {StoreTypes};

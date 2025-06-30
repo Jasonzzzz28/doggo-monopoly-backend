@@ -1,5 +1,5 @@
-const dishTypes = [
-    {
+const DishTypes = {
+    LEVEL_1: {
         type: "level-1",
         name: "Basic Dish",
         description: "A simple dish that's easy to prepare and serve",
@@ -9,7 +9,7 @@ const dishTypes = [
         icon: "fas fa-utensils",
         image: "basic-dish.jpg"
     },
-    {
+    LEVEL_2: {
         type: "level-2",
         name: "Standard Dish",
         description: "A well-prepared dish with good quality ingredients",
@@ -19,7 +19,7 @@ const dishTypes = [
         icon: "fas fa-plate-wheat",
         image: "standard-dish.jpg"
     },
-    {
+    LEVEL_3: {
         type: "level-3",
         name: "Premium Dish",
         description: "A high-quality dish made with premium ingredients",
@@ -29,7 +29,7 @@ const dishTypes = [
         icon: "fas fa-crown",
         image: "premium-dish.jpg"
     },
-    {
+    LEVEL_4: {
         type: "level-4",
         name: "Specialty Dish",
         description: "A unique dish with bonus income based on dice roll",
@@ -39,7 +39,7 @@ const dishTypes = [
         icon: "fas fa-star",
         image: "specialty-dish.jpg"
     }
-];
+};
 
-// This line exports the `dishTypes` array so that it can be imported and used in other files within the Node.js application.
-module.exports = dishTypes;
+// This line exports the `DishTypes` enum so that it can be imported and used in other files within the Node.js application.
+module.exports = DishTypes;

@@ -1,7 +1,6 @@
-/**
- * Player object structure for Doggo Monopoly game
- * Each player has an id, name, avatar, cards, money, and card piles
- */
+const Store = require('./store');
+const Dish = require('./dish');
+const { DoggoCards, DoggoCardData } = require('./doggoCards');
 
 const defaultMoney = 5;
 // TODO: Modify to use individual dish cards when we have them
@@ -21,42 +20,44 @@ class Player {
     }
 
     /**
-     * Add a store card to player's collection
-     * @param {string} cardId - The ID of the store card to add
+     * Acquire a store card from the store market
+     * @param {Store} store - The store card to acquire
+     * @returns {boolean} - True if successful, false if insufficient funds
      */
-    addStoreCard(cardId) {
-        this.storeCards.push(cardId);
-    }
-
-    /**
-     * Remove a store card from player's collection
-     * @param {string} cardId - The ID of the store card to remove
-     * @returns {boolean} - True if card was removed, false if not found
-     */
-    removeStoreCard(cardId) {
-        const index = this.storeCards.indexOf(cardId);
-        if (index > -1) {
-            this.storeCards.splice(index, 1);
+    acquireStoreCard(store) {
+        const cost = store.getCost();
+        if (this.money >= cost) {
+            this.money -= cost;
+            this.storeCards.push(store);
             return true;
         }
         return false;
     }
 
     /**
-     * Add a dish card to player's collection
-     * @param {string} cardId - The ID of the dish card to add
+     * Host a doggo card
+     * @param {DoggoCards} doggo - The doggo card to host
+     * @returns {boolean} - True if successful
      */
-    addDishCard(cardId) {
-        this.dishCards.push(cardId);
+    hostDoggoCard(doggo) {
+        return true;
+    }
+
+    /**
+     * Add a dish card to player's collection
+     * @param {Dish} dish - The dish card to add
+     */
+    addDishCard(dish) {
+        this.dishCards.push(dish);
     }
 
     /**
      * Remove a dish card from player's collection
-     * @param {string} cardId - The ID of the dish card to remove
+     * @param {Dish} dish - The dish card to remove
      * @returns {boolean} - True if card was removed, false if not found
      */
-    removeDishCard(cardId) {
-        const index = this.dishCards.indexOf(cardId);
+    removeDishCard(dish) {
+        const index = this.dishCards.indexOf(dish);
         if (index > -1) {
             this.dishCards.splice(index, 1);
             return true;
@@ -86,16 +87,8 @@ class Player {
     }
 
     /**
-     * Add a card to the draw pile
-     * @param {string} cardId - The ID of the card to add
-     */
-    addToDrawPile(cardId) {
-        this.drawPile.push(cardId);
-    }
-
-    /**
      * Draw a card from the draw pile
-     * @returns {string|null} - The card ID or null if draw pile is empty
+     * @returns {Dish|Store|null} - The card or null if draw pile is empty
      */
     drawCard() {
         if (this.drawPile.length === 0) {
@@ -106,10 +99,10 @@ class Player {
 
     /**
      * Add a card to the discard pile
-     * @param {string} cardId - The ID of the card to discard
+     * @param {Dish|Store} card - The card to discard
      */
-    addToDiscardPile(cardId) {
-        this.discardPile.push(cardId);
+    addToDiscardPile(card) {
+        this.discardPile.push(card);
     }
 
     /**
@@ -128,25 +121,11 @@ class Player {
     }
 
     /**
-     * Get player's total net worth (money + card values)
-     * @param {Object} storeCardValues - Object mapping store card IDs to their values
-     * @param {Object} dishCardValues - Object mapping dish card IDs to their values
+     * Get player's total net worth (money)
      * @returns {number} - Total net worth
      */
-    getNetWorth(storeCardValues = {}, dishCardValues = {}) {
-        let cardValue = 0;
-        
-        // Calculate store card values
-        this.storeCards.forEach(cardId => {
-            cardValue += storeCardValues[cardId] || 0;
-        });
-        
-        // Calculate dish card values
-        this.dishCards.forEach(cardId => {
-            cardValue += dishCardValues[cardId] || 0;
-        });
-        
-        return this.money + cardValue;
+    getNetWorth() {
+        return this.money;
     }
 
     /**
