@@ -1,5 +1,5 @@
-const DishTypes = {
-    LEVEL_1: {
+const DishTypes = Object.freeze({
+    LEVEL_1: Object.freeze({
         type: "level-1",
         name: "Basic Dish",
         description: "A simple dish that's easy to prepare and serve",
@@ -8,8 +8,8 @@ const DishTypes = {
         color: "gray",
         icon: "fas fa-utensils",
         image: "basic-dish.jpg"
-    },
-    LEVEL_2: {
+    }),
+    LEVEL_2: Object.freeze({
         type: "level-2",
         name: "Standard Dish",
         description: "A well-prepared dish with good quality ingredients",
@@ -18,8 +18,8 @@ const DishTypes = {
         color: "blue",
         icon: "fas fa-plate-wheat",
         image: "standard-dish.jpg"
-    },
-    LEVEL_3: {
+    }),
+    LEVEL_3: Object.freeze({
         type: "level-3",
         name: "Premium Dish",
         description: "A high-quality dish made with premium ingredients",
@@ -28,8 +28,8 @@ const DishTypes = {
         color: "purple",
         icon: "fas fa-crown",
         image: "premium-dish.jpg"
-    },
-    LEVEL_4: {
+    }),
+    LEVEL_4: Object.freeze({
         type: "level-4",
         name: "Specialty Dish",
         description: "A unique dish with bonus income based on dice roll",
@@ -38,8 +38,8 @@ const DishTypes = {
         color: "gold",
         icon: "fas fa-star",
         image: "specialty-dish.jpg"
-    }
-};
+    })
+});
 
 // This line exports the `DishTypes` enum so that it can be imported and used in other files within the Node.js application.
 module.exports = DishTypes;

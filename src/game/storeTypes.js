@@ -1,5 +1,5 @@
-const StoreTypes = {
-    TOY_SHOP: {
+const StoreTypes = Object.freeze({
+    TOY_SHOP: Object.freeze({
         type: "toy-shop",
         name: "Toy Shop",
         description: "A fun store filled with squeaky toys and interactive games",
@@ -9,8 +9,8 @@ const StoreTypes = {
         color: "blue",
         icon: "fas fa-store",
         image: "toy-shop.jpg"
-    },
-    GROOMING_SPA: {
+    }),
+    GROOMING_SPA: Object.freeze({
         type: "grooming-spa",
         name: "Grooming Spa",
         description: "A luxurious spa for pampering and grooming services",
@@ -20,8 +20,8 @@ const StoreTypes = {
         color: "purple",
         icon: "fas fa-spa",
         image: "grooming-spa.jpg"
-    },
-    BONE_BAKERY: {
+    }),
+    BONE_BAKERY: Object.freeze({
         type: "bone-bakery",
         name: "Bone Bakery",
         description: "A bakery specializing in fresh-baked dog treats and bones",
@@ -31,8 +31,8 @@ const StoreTypes = {
         color: "amber",
         icon: "fas fa-bone",
         image: "bone-bakery.jpg"
-    },
-    DOG_PARK: {
+    }),
+    DOG_PARK: Object.freeze({
         type: "dog-park",
         name: "Dog Park",
         description: "An outdoor park with agility equipment and play areas",
@@ -42,8 +42,8 @@ const StoreTypes = {
         color: "green",
         icon: "fas fa-paw",
         image: "dog-park.jpg"
-    },
-    TREAT_CAFE: {
+    }),
+    TREAT_CAFE: Object.freeze({
         type: "treat-cafe",
         name: "Treat Cafe",
         description: "A cozy cafe serving gourmet dog treats and refreshments",
@@ -53,8 +53,8 @@ const StoreTypes = {
         color: "pink",
         icon: "fas fa-utensils",
         image: "treat-cafe.jpg"
-    },
-    VET_CLINIC: {
+    }),
+    VET_CLINIC: Object.freeze({
         type: "vet-clinic",
         name: "Vet Clinic",
         description: "A medical clinic providing health care and check-ups",
@@ -64,8 +64,8 @@ const StoreTypes = {
         color: "red",
         icon: "fas fa-stethoscope",
         image: "vet-clinic.jpg"
-    },
-    TRAINING_CENTER: {
+    }),
+    TRAINING_CENTER: Object.freeze({
         type: "training-center",
         name: "Training Center",
         description: "A facility for obedience training and behavior classes",
@@ -75,8 +75,8 @@ const StoreTypes = {
         color: "indigo",
         icon: "fas fa-graduation-cap",
         image: "training-center.jpg"
-    },
-    PET_HOTEL: {
+    }),
+    PET_HOTEL: Object.freeze({
         type: "pet-hotel",
         name: "Pet Hotel",
         description: "A luxury hotel for overnight stays and boarding",
@@ -86,8 +86,8 @@ const StoreTypes = {
         color: "yellow",
         icon: "fas fa-bed",
         image: "pet-hotel.jpg"
-    },
-    SWIMMING_POOL: {
+    }),
+    SWIMMING_POOL: Object.freeze({
         type: "swimming-pool",
         name: "Swimming Pool",
         description: "An indoor pool for swimming lessons and water fun",
@@ -97,8 +97,8 @@ const StoreTypes = {
         color: "cyan",
         icon: "fas fa-swimming-pool",
         image: "swimming-pool.jpg"
-    },
-    PHOTOGRAPHY_STUDIO: {
+    }),
+    PHOTOGRAPHY_STUDIO: Object.freeze({
         type: "photography-studio",
         name: "Photography Studio",
         description: "A studio for professional pet photography sessions",
@@ -108,8 +108,8 @@ const StoreTypes = {
         color: "rose",
         icon: "fas fa-camera",
         image: "photography-studio.jpg"
-    },
-    ICE_CREAM_PARLOR: {
+    }),
+    ICE_CREAM_PARLOR: Object.freeze({
         type: "ice-cream-parlor",
         name: "Ice Cream Parlor",
         description: "A sweet shop serving dog-friendly ice cream and frozen treats",
@@ -119,8 +119,8 @@ const StoreTypes = {
         color: "sky",
         icon: "fas fa-ice-cream",
         image: "ice-cream-parlor.jpg"
-    },
-    ADVENTURE_GEAR: {
+    }),
+    ADVENTURE_GEAR: Object.freeze({
         type: "adventure-gear",
         name: "Adventure Gear",
         description: "A store selling hiking gear, backpacks, and outdoor equipment",
@@ -130,7 +130,7 @@ const StoreTypes = {
         color: "orange",
         icon: "fas fa-hiking",
         image: "adventure-gear.jpg"
-    }
-};
+    })
+});
 
 module.exports = {StoreTypes};

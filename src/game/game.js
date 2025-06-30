@@ -2,15 +2,7 @@ const { Player, createPlayer } = require('./player.js');
 const { getRandomDoggoCards } = require('./doggoCards.js');
 const { StoreTypes } = require('./storeTypes.js');
 const { Store } = require('./store.js');
-
-/**
- * Game status enum
- */
-const GameStatus = {
-    WAITING: 'waiting',
-    ACTIVE: 'active',
-    ENDED: 'ended'
-};
+const { GameStatus } = require('./gameStatus.js');
 
 /**
  * Game class for Doggo Monopoly
@@ -372,6 +364,5 @@ function createGame(id, requiredPlayers) {
 
 module.exports = {
     Game,
-    createGame,
-    GameStatus
+    createGame
 };

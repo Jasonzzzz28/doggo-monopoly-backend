@@ -1,11 +1,11 @@
 const Store = require('./store');
 const Dish = require('./dish');
-const { DoggoCards, DoggoCardData } = require('./doggoCards');
+const { DoggoCards } = require('./doggoCards');
 
 const defaultMoney = 5;
 // TODO: Modify to use individual dish cards when we have them
 const defaultDishCards = ["level-1", "level-1", "level-1", "level-1", "level-1", "level-1", "level-2", "level-2"];
-const defaultDrawPile = ["level-1", "level-1", "level-1", "level-1", "level-1", "level-1", "level-2", "level-2"];
+const defaultDishCardsDrawPile = ["level-1", "level-1", "level-1", "level-1", "level-1", "level-1", "level-2", "level-2"];
 
 class Player {
     constructor(id, name, avatar) {
@@ -15,8 +15,8 @@ class Player {
         this.storeCards = [];                   // List of store card IDs owned by player
         this.dishCards = defaultDishCards;                    // List of dish card IDs owned by player
         this.money = defaultMoney;                      // Player's current money (starting amount)
-        this.drawPile = defaultDrawPile;                // Cards in player's draw pile
-        this.discardPile = [];                  // Cards in player's discard pile
+        this.dishCardsDrawPile = defaultDishCardsDrawPile;                // Cards in player's draw pile
+        this.dishCardsDiscardPile = [];                  // Cards in player's discard pile
     }
 
     /**
@@ -37,10 +37,19 @@ class Player {
     /**
      * Host a doggo card
      * @param {DoggoCards} doggo - The doggo card to host
-     * @returns {boolean} - True if successful
      */
     hostDoggoCard(doggo) {
-        return true;
+        for (let i = 0; i < doggo.dishes_eaten.length; i++) {
+            const dish = this.drawDishCard();
+            this.money += dish.getIncome();
+            this.dishCardsDiscardPile.push(dish);
+        }
+        this.storeCards.forEach(store => {
+            // TODO: Add special effect for store later
+            if (store.isBuilt() && doggo.stores_visited.includes(store.getType())) {
+                this.money += store.getIncome();
+            }
+        });
     }
 
     /**
@@ -53,12 +62,11 @@ class Player {
 
     /**
      * Remove a dish card from player's collection
-     * @param {Dish} dish - The dish card to remove
-     * @returns {boolean} - True if card was removed, false if not found
+     * @param {number} index - The index of the dish card to remove
+     * @returns {boolean} - True if card was removed
      */
-    removeDishCard(dish) {
-        const index = this.dishCards.indexOf(dish);
-        if (index > -1) {
+    removeDishCard(index) {
+        if (index > -1 && index < this.dishCards.length) {
             this.dishCards.splice(index, 1);
             return true;
         }
@@ -88,21 +96,13 @@ class Player {
 
     /**
      * Draw a card from the draw pile
-     * @returns {Dish|Store|null} - The card or null if draw pile is empty
+     * @returns {Dish} - The card or null if draw pile is empty
      */
-    drawCard() {
-        if (this.drawPile.length === 0) {
+    drawDishCard() {
+        if (this.dishCardsDrawPile.length === 0) {
             this.shuffleDiscardIntoDraw();
         }
-        return this.drawPile.length > 0 ? this.drawPile.pop() : null;
-    }
-
-    /**
-     * Add a card to the discard pile
-     * @param {Dish|Store} card - The card to discard
-     */
-    addToDiscardPile(card) {
-        this.discardPile.push(card);
+        return this.dishCardsDrawPile.length > 0 ? this.dishCardsDrawPile.pop() : null;
     }
 
     /**
@@ -110,14 +110,14 @@ class Player {
      */
     shuffleDiscardIntoDraw() {
         // Fisher-Yates shuffle algorithm
-        for (let i = this.discardPile.length - 1; i > 0; i--) {
+        for (let i = this.dishCardsDiscardPile.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [this.discardPile[i], this.discardPile[j]] = [this.discardPile[j], this.discardPile[i]];
+            [this.dishCardsDiscardPile[i], this.dishCardsDiscardPile[j]] = [this.dishCardsDiscardPile[j], this.dishCardsDiscardPile[i]];
         }
         
         // Move all cards from discard to draw pile
-        this.drawPile.push(...this.discardPile);
-        this.discardPile = [];
+        this.dishCardsDrawPile.push(...this.dishCardsDiscardPile);
+        this.dishCardsDiscardPile = [];
     }
 
     /**
@@ -140,8 +140,8 @@ class Player {
             money: this.money,
             storeCardCount: this.storeCards.length,
             dishCardCount: this.dishCards.length,
-            drawPileCount: this.drawPile.length,
-            discardPileCount: this.discardPile.length
+            dishCardsDrawPileCount: this.dishCardsDrawPile.length,
+            dishCardsDiscardPileCount: this.dishCardsDiscardPile.length
         };
     }
 

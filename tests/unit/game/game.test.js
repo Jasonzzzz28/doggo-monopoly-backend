@@ -1,4 +1,5 @@
-const { Game, createGame, GameStatus } = require('../../../server/game/game.js');
+const { Game, createGame } = require('../../../src/game/game.js');
+const { GameStatus } = require('../../../src/game/gameStatus.js');
 
 describe('Game', () => {
     let game;
