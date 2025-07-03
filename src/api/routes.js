@@ -2,7 +2,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { createGame, GameStatus } = require('../game/game.js');
 const { createPlayer } = require('../game/players.js');
-const memoryStore = require('../game/memoryStore.js');
+const dataBase = require('../services/dataService.js');
 
 const router = express.Router();
 
@@ -51,7 +51,7 @@ router.post('/create-game', (req, res) => {
         const game = createGame(gameId, numberOfPlayers);
 
         // Store the game in memory
-        memoryStore.set(gameId, game);
+        dataBase.set(gameId, game);
 
         console.log(`Game created: ${gameId} with ${numberOfPlayers} players`);
 

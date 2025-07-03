@@ -1,10 +1,9 @@
 const DishTypes = require('./dishTypes');
 
 class Dish {
-    constructor(type, cardId) {
+    constructor(type, cardId=null) {
         this.type = type;
         this.cardId = cardId;
-        this.isBuilt = isBuilt;
     }
     getType() {
         return this.type;
@@ -13,13 +12,13 @@ class Dish {
         return this.cardId;
     }
     getCost() {
-        return DishTypes[this.type].build_cost;
+        return this.type.build_cost;
     }
     getIncome() {
-        return DishTypes[this.type].income_per_doggo;
+        return this.type.income_per_doggo;
     }
     getSpecialEffect() {
-        return DishTypes[this.type].special_effect;
+        return this.type.special_effect;
     }
 }
 

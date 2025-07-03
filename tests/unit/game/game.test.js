@@ -1,11 +1,11 @@
-const { Game, createGame } = require('../../../src/game/game.js');
+const Game = require('../../../src/game/game.js');
 const { GameStatus } = require('../../../src/game/gameStatus.js');
 
 describe('Game', () => {
     let game;
 
     beforeEach(() => {
-        game = createGame('test-game-1', 4);
+        game = new Game('test-game-1', 4);
     });
 
     describe('Game Creation', () => {
@@ -169,8 +169,7 @@ describe('Game', () => {
             const currentPlayer = game.getCurrentPlayer();
             
             expect(currentPlayer).toBeDefined();
-            expect(currentPlayer.id).toBe('player1');
-            expect(currentPlayer.name).toBe('Alice');
+            expect(currentPlayer.id).toBe(game.playerOrder[0]);
         });
 
         test('should move to next turn correctly', () => {
@@ -184,24 +183,25 @@ describe('Game', () => {
         });
 
         test('should cycle through players correctly', () => {
+            const playerOrder = game.playerOrder;
             // First turn - player1
-            expect(game.getCurrentPlayer().id).toBe('player1');
+            expect(game.getCurrentPlayer().id).toBe(playerOrder[0]);
             
             // Second turn - player2
             game.nextTurn();
-            expect(game.getCurrentPlayer().id).toBe('player2');
+            expect(game.getCurrentPlayer().id).toBe(playerOrder[1]);
             
             // Third turn - player3
             game.nextTurn();
-            expect(game.getCurrentPlayer().id).toBe('player3');
+            expect(game.getCurrentPlayer().id).toBe(playerOrder[2]);
             
             // Fourth turn - player4
             game.nextTurn();
-            expect(game.getCurrentPlayer().id).toBe('player4');
+            expect(game.getCurrentPlayer().id).toBe(playerOrder[3]);
             
             // Fifth turn - back to player1
             game.nextTurn();
-            expect(game.getCurrentPlayer().id).toBe('player1');
+            expect(game.getCurrentPlayer().id).toBe(playerOrder[0]);
         });
     });
 
@@ -234,7 +234,7 @@ describe('Game', () => {
         });
 
         test('should get detailed game state correctly', () => {
-            const detailedState = game.getDetailedGameState();
+            const detailedState = game.getGameState();
             
             expect(detailedState.id).toBe('test-game-1');
             expect(detailedState.status).toBe(GameStatus.WAITING);

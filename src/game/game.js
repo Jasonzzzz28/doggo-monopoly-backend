@@ -1,8 +1,13 @@
-const { Player, createPlayer } = require('./player.js');
+const Player = require('./player.js');
 const { getRandomDoggoCards } = require('./doggoCards.js');
 const { StoreTypes } = require('./storeTypes.js');
-const { Store } = require('./store.js');
+const Store = require('./store.js');
 const { GameStatus } = require('./gameStatus.js');
+
+const MAX_VISIBLE_DOGGO_CARDS = 4;
+const MAX_VISIBLE_STORE_CARDS = 4;
+const WINNING_MONEY = 50;
+const WINNING_BUILT_STORES = 8;
 
 /**
  * Game class for Doggo Monopoly
@@ -10,24 +15,30 @@ const { GameStatus } = require('./gameStatus.js');
  */
 class Game {
     constructor(id, requiredPlayers) {
-        this.id = id;                           // Unique game identifier
-        this.status = GameStatus.WAITING;       // Game status: 'waiting', 'active', 'ended'
-        this.requiredPlayers = requiredPlayers; // Exact number of players required to start
-        this.players = {};                      // Object storing all players, indexed by player ID
-        this.playerOrder = [];                  // Array of player IDs determining turn order
-        this.currentPlayerIndex = 0;            // Index in playerOrder pointing to current player
-        this.npcDoggos = {                      // NPC doggo cards management
-            visible: [],                        // Up to 4 visible NPC doggo cards
-            discardPile: [],                    // Discarded NPC doggo cards
-            drawPile: [],                       // NPC doggo cards to draw from
-            extraMoney: [0, 0, 0, 0]            // Extra money attached to the 4 visible doggo cards
+        this.id = id;
+        this.status = GameStatus.WAITING;
+        this.requiredPlayers = requiredPlayers;
+        this.players = {};
+        this.playerOrder = [];
+        this.currentPlayerIndex = 0;
+        this.npcDoggos = {
+            visible: [],
+            discardPile: [],
+            drawPile: [],
+            extraMoney: [0, 0, 0, 0]
         };
-        this.storeMarket = {                    // Store cards management
-            visible: [],                        // Up to 4 visible store cards
-            drawPile: []                        // Store cards to draw from
+        this.storeMarket = {
+            visible: [],
+            drawPile: []
         };
-        this.turnNumber = 0;                    // Current turn number
-        this.createdAt = Date.now();            // Timestamp when game was created
+        this.turnNumber = 0;
+        this.createdAt = Date.now();
+    }
+
+    isCurrentPlayerWinner() {
+        return this.getCurrentPlayer().money >= WINNING_MONEY 
+        && this.getCurrentPlayer().storeCards.length === WINNING_BUILT_STORES
+        && this.getCurrentPlayer().storeCards.every(store => store.isBuilt());
     }
 
     /**
@@ -46,7 +57,7 @@ class Game {
             return false; // Game is full
         }
 
-        const player = createPlayer(playerId, playerName, avatar);
+        const player = new Player(playerId, playerName, avatar);
         this.players[playerId] = player;
         this.playerOrder.push(playerId);
 
@@ -97,10 +108,22 @@ class Game {
         this.turnNumber = 1;
         this.currentPlayerIndex = 0;
 
-        // Initialize card piles (this would be populated with actual card data)
+        this.initializePlayers();
         this.initializeCardPiles();
 
         return true;
+    }
+
+    initializePlayers() {
+        this.playerOrder = this.playerOrder.sort(() => Math.random() - 0.5);
+        if (this.playerOrder.length < 2) {
+            return;
+        }
+        for (let i = 1; i < this.playerOrder.length; i++) {
+            const playerId = this.playerOrder[i];
+            const player = this.players[playerId];
+            player.addMoney(i);
+        }
     }
 
     /**
@@ -190,7 +213,7 @@ class Game {
         this.initializeDoggoCards();
         this.initializeStoreCards();
         // Draw initial visible cards
-        this.drawVisibleCards();
+        this.drawInitialVisibleCards();
     }
 
     initializeDoggoCards() {
@@ -230,21 +253,95 @@ class Game {
         return card;
     }
 
+    drawDoggoCard() {
+        if (this.npcDoggos.drawPile.length === 0) {
+            return null;
+        }
+        const card = this.npcDoggos.drawPile.pop();
+        return card;
+    }
+
     /**
      * Draw cards to make visible piles up to their maximum size
      */
-    drawVisibleCards() {
+    drawInitialVisibleCards() {
         // Draw up to 4 visible NPC doggo cards
-        while (this.npcDoggos.visible.length < 4 && this.npcDoggos.drawPile.length > 0) {
+        while (this.npcDoggos.visible.length < MAX_VISIBLE_DOGGO_CARDS && this.npcDoggos.drawPile.length > 0) {
             const card = this.npcDoggos.drawPile.pop();
             this.npcDoggos.visible.push(card);
         }
 
         // Draw up to 4 visible store cards
-        while (this.storeMarket.visible.length < 4 && this.storeMarket.drawPile.length > 0) {
+        while (this.storeMarket.visible.length < MAX_VISIBLE_STORE_CARDS && this.storeMarket.drawPile.length > 0) {
             const card = this.storeMarket.drawPile.pop();
             this.storeMarket.visible.push(card);
         }
+    }
+
+    sellStoreCardToCurrentPlayer(storeIndex) {
+        const player = this.getCurrentPlayer();
+        if (!player) {
+            return false;
+        }
+        if (storeIndex < 0 || storeIndex >= this.storeMarket.visible.length) {
+            return false;
+        }
+        const store = this.storeMarket.visible[storeIndex];
+        if (!player.acquireStoreCard(store)) {
+            return false;
+        }
+        this.replaceVisibleStoreCard(storeIndex);
+        return true;
+    }
+    
+    replaceVisibleStoreCard(storeIndex) {
+        if (storeIndex < 0 || storeIndex >= this.storeMarket.visible.length) {
+            return false;
+        }
+        const newStore = this.drawStoreCard();
+        if (!newStore) {
+            return false;
+        }
+        this.storeMarket.visible[storeIndex] = newStore;
+        return true;
+    }
+
+    assignDoggoCardToCurrentPlayer(doggoIndex) {
+        const player = this.getCurrentPlayer();
+        if (!player) {
+            return false;
+        }
+        if (doggoIndex < 0 || doggoIndex >= this.npcDoggos.visible.length) {
+            return false;
+        }
+        if (doggoIndex > 0) {
+            const cost = ((doggoIndex + 1) * doggoIndex) / 2;
+            if (player.getNetWorth() < cost) {
+                return false;
+            }
+            player.removeMoney(cost);
+            for (let i = 0; i < doggoIndex; i++) {
+                this.npcDoggos.extraMoney[i] += i + 1;
+            }
+        }
+        const doggo = this.npcDoggos.visible[doggoIndex];
+        if (!player.acquireDoggoCard(doggo)) {
+            return false;
+        }
+        this.replaceVisibleDoggoCard(doggoIndex);
+        return true;
+    }
+
+    replaceVisibleDoggoCard(doggoIndex) {
+        if (doggoIndex < 0 || doggoIndex >= this.npcDoggos.visible.length) {
+            return false;
+        }
+        const newDoggo = this.drawDoggoCard();
+        if (!newDoggo) {
+            return false;
+        }
+        this.npcDoggos.visible[doggoIndex] = newDoggo;
+        return true;
     }
 
     /**
@@ -274,95 +371,6 @@ class Game {
             }
         };
     }
-
-    /**
-     * Get detailed game state for debugging
-     * @returns {Object} - Complete game state
-     */
-    getDetailedGameState() {
-        return {
-            id: this.id,
-            status: this.status,
-            requiredPlayers: this.requiredPlayers,
-            players: this.players,
-            playerOrder: this.playerOrder,
-            currentPlayerIndex: this.currentPlayerIndex,
-            npcDoggos: this.npcDoggos,
-            storeMarket: this.storeMarket,
-            turnNumber: this.turnNumber,
-            createdAt: this.createdAt
-        };
-    }
-
-    sellStoreCardToPlayer(playerId, storeIndex) {
-        const player = this.players[playerId];
-        if (!player) {
-            return false;
-        }
-        if (storeIndex < 0 || storeIndex >= this.storeMarket.visible.length) {
-            return false;
-        }
-        const store = this.storeMarket.visible[storeIndex];
-        if (!player.acquireStoreCard(store)) {
-            return false;
-        }
-        this.storeMarket.visible.splice(storeIndex, 1);
-        return true;
-    }
-    
-    replaceStoreCard(playerId, storeIndex) {
-        const player = this.players[playerId];
-        if (!player) {
-            return false;
-        }
-        if (storeIndex < 0 || storeIndex >= player.storeCards.length) {
-            return false;
-        }
-        const newStore = this.drawStoreCard();
-        if (!newStore) {
-            return false;
-        }
-        player.storeCards[storeIndex] = newStore;
-        return true;
-    }
-
-    assignDoggoCardToPlayer(playerId, doggoIndex) {
-        const player = this.players[playerId];
-        if (!player) {
-            return false;
-        }
-        if (doggoIndex < 0 || doggoIndex >= this.npcDoggos.visible.length) {
-            return false;
-        }
-        if (doggoIndex > 0) {
-            const cost = ((doggoIndex + 1) * doggoIndex) / 2;
-            if (player.getNetWorth() < cost) {
-                return false;
-            }
-            player.removeMoney(cost);
-            for (let i = 0; i < doggoIndex; i++) {
-                this.npcDoggos.extraMoney[i] += i + 1;
-            }
-        }
-        const doggo = this.npcDoggos.visible[doggoIndex];
-        if (!player.acquireDoggoCard(doggo)) {
-            return false;
-        }
-    }
-
 }
 
-/**
- * Create a new game instance
- * @param {string} id - Unique game identifier
- * @param {number} requiredPlayers - Exact number of players required to start
- * @returns {Game} - New game instance
- */
-function createGame(id, requiredPlayers) {
-    return new Game(id, requiredPlayers);
-}
-
-module.exports = {
-    Game,
-    createGame
-};
+module.exports = Game;

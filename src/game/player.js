@@ -1,22 +1,27 @@
 const Store = require('./store');
 const Dish = require('./dish');
+const DishTypes = require('./dishTypes');
 const { DoggoCards } = require('./doggoCards');
 
 const defaultMoney = 5;
-// TODO: Modify to use individual dish cards when we have them
-const defaultDishCards = ["level-1", "level-1", "level-1", "level-1", "level-1", "level-1", "level-2", "level-2"];
-const defaultDishCardsDrawPile = ["level-1", "level-1", "level-1", "level-1", "level-1", "level-1", "level-2", "level-2"];
 
 class Player {
     constructor(id, name, avatar) {
-        this.id = id;                           // Unique player identifier
-        this.name = name;                       // Player's display name
-        this.avatar = avatar;                   // Path to player's avatar image
-        this.storeCards = [];                   // List of store card IDs owned by player
-        this.dishCards = defaultDishCards;                    // List of dish card IDs owned by player
-        this.money = defaultMoney;                      // Player's current money (starting amount)
-        this.dishCardsDrawPile = defaultDishCardsDrawPile;                // Cards in player's draw pile
-        this.dishCardsDiscardPile = [];                  // Cards in player's discard pile
+        this.id = id;
+        this.name = name;
+        this.avatar = avatar;
+        this.storeCards = [];
+        this.dishCards = this.createDefaultDishCards();
+        this.money = defaultMoney;
+        this.dishCardsDrawPile = this.createDefaultDishCards();
+        this.dishCardsDiscardPile = [];
+    }
+
+    /********** TEMPORARY METHODS **********/
+
+    // TODO: Modify to use individual dish cards when we have them
+    createDefaultDishCards() {
+        return [new Dish(DishTypes.LEVEL_1), new Dish(DishTypes.LEVEL_1), new Dish(DishTypes.LEVEL_1), new Dish(DishTypes.LEVEL_1), new Dish(DishTypes.LEVEL_1), new Dish(DishTypes.LEVEL_1), new Dish(DishTypes.LEVEL_2), new Dish(DishTypes.LEVEL_2)];
     }
 
     /**
@@ -25,7 +30,17 @@ class Player {
      * @returns {boolean} - True if successful, false if insufficient funds
      */
     acquireStoreCard(store) {
-        const cost = store.getCost();
+        if (this.storeCards.length == 8) {
+            return false;
+        }
+
+        cost = this.storeCards.length + 1;
+        if (this.storeCards.length == 0) {
+            cost = 0;
+        }
+        if (this.storeCards.length >= 4) {
+            cost += 2;
+        }
         if (this.money >= cost) {
             this.money -= cost;
             this.storeCards.push(store);
@@ -34,12 +49,32 @@ class Player {
         return false;
     }
 
+    /********** PUBLIC METHODS **********/
+
+    buildStore(storeIndex) {
+        if (storeIndex < 0 || storeIndex >= this.storeCards.length) {
+            return false;
+        }
+        const store = this.storeCards[storeIndex];
+        if (store.isBuilt()) {
+            return false;
+        }
+        if (this.money < store.getCost()) {
+            return false;
+        }
+        this.money -= store.getCost();
+        store.build();
+        return true;
+    }
+
     /**
      * Host a doggo card
      * @param {DoggoCards} doggo - The doggo card to host
+     * @param {number} extraMoney - Extra money to add to player's balance
      */
-    hostDoggoCard(doggo) {
-        for (let i = 0; i < doggo.dishes_eaten.length; i++) {
+    hostDoggoCard(doggo, extraMoney=0) {
+        this.money += extraMoney;
+        for (let i = 0; i < doggo.dishes_eaten; i++) {
             const dish = this.drawDishCard();
             this.money += dish.getIncome();
             this.dishCardsDiscardPile.push(dish);
@@ -61,18 +96,20 @@ class Player {
     }
 
     /**
-     * Remove a dish card from player's collection
+     * Remove a dish card from player's discard pile
      * @param {number} index - The index of the dish card to remove
      * @returns {boolean} - True if card was removed
      */
-    removeDishCard(index) {
-        if (index > -1 && index < this.dishCards.length) {
-            this.dishCards.splice(index, 1);
+    removeDishCardFromDiscardPile(index) {
+        if (index > -1 && index < this.dishCardsDiscardPile.length) {
+            this.dishCardsDiscardPile.splice(index, 1);
             return true;
         }
         return false;
     }
 
+    /********** PRIVATE METHODS **********/
+    
     /**
      * Add money to player's balance
      * @param {number} amount - Amount to add
@@ -157,13 +194,5 @@ class Player {
     }
 }
 
-// Example player creation function
-function createPlayer(id, name, avatar) {
-    return new Player(id, name, avatar);
-}
-
-// Export the Player class and helper function
-module.exports = {
-    Player,
-    createPlayer
-};
+// Export the Player class
+module.exports = Player;
