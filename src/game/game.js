@@ -32,7 +32,7 @@ class Game {
             drawPile: []
         };
         this.turnNumber = 0;
-        this.createdAt = Date.now();
+        this.createdAt = Math.floor(Date.now() / 1000);
     }
 
     isCurrentPlayerWinner() {
