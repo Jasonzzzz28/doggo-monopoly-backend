@@ -1,7 +1,7 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
-const { createGame, GameStatus } = require('../game/game.js');
-const { createPlayer } = require('../game/players.js');
+const Game = require('../game/game.js');
+const { createPlayer } = require('../game/player.js');
 const dataBase = require('../services/dataService.js');
 
 const router = express.Router();
@@ -48,7 +48,7 @@ router.post('/create-game', (req, res) => {
         const gameId = uuidv4();
 
         // Create new game instance
-        const game = createGame(gameId, numberOfPlayers);
+        const game = new Game(gameId, numberOfPlayers);
 
         // Store the game in memory
         dataBase.set(gameId, game);
@@ -68,44 +68,39 @@ router.post('/create-game', (req, res) => {
 });
 
 /**
- * TODO: Create this route in the future if needed
- * 
- * POST /validate-game
- * Validates if a game exists and returns its status
- * 
- * Request body:
- * {
- *   "gameId": "string"
- * }
+ * GET /game/:gameId
+ * Retrieves a game by its ID
  * 
  * Response:
- * Status 200: Game exists and is joinable
+ * Status 200: Returns the game object
  * Status 404: Game not found
- * Status 400: Game is full or has already started
  */
-
-/**
- * GET /games
- * Retrieves a list of all games currently stored in memory
- * 
- * Response:
- * Status 200: Returns an array of game summaries
- */
-router.get('/games', (req, res) => {
-    try {
-        const games = Array.from(memoryStore.values()).map(game => ({
-            gameId: game.id,
-            numberOfPlayers: game.requiredPlayers,
-            status: game.status
-        }));
-
-        res.status(200).json(games);
-    } catch (error) {
-        console.error('Error retrieving games:', error);
-        res.status(500).json({
-            error: 'Internal server error while retrieving games'
-        });
+router.get('/game/:gameId', (req, res) => {
+    const gameId = req.params.gameId;
+    const game = dataBase.get(gameId);
+    if (!game) {
+        return res.status(404).json({ error: 'Game not found' });
     }
+    res.status(200).json(game);
 });
+
+
+// dev only
+// router.get('/games', (req, res) => {
+//     try {
+//         const games = Array.from(dataBase.values()).map(game => ({
+//             gameId: game.id,
+//             numberOfPlayers: game.requiredPlayers,
+//             status: game.status
+//         }));
+
+//         res.status(200).json(games);
+//     } catch (error) {
+//         console.error('Error retrieving games:', error);
+//         res.status(500).json({
+//             error: 'Internal server error while retrieving games'
+//         });
+//     }
+// });
 
 module.exports = router; 
