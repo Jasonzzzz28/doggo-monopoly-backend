@@ -28,6 +28,13 @@ class Store {
     getSpecialEffect() {
         return this.type.special_effect;
     }
+    toResponse() {
+        return {
+            type: this.type.type,
+            cardId: this.cardId,
+            isCompleted: this.isCompleted
+        };
+    }
 }
 
 module.exports = Store;

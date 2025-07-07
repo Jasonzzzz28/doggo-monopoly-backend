@@ -2,7 +2,7 @@ const Player = require('../../../src/game/player.js');
 const Store = require('../../../src/game/store.js');
 const { StoreTypes } = require('../../../src/game/storeTypes.js');
 const Dish = require('../../../src/game/dish.js');
-const DishTypes = require('../../../src/game/dishTypes.js');
+const { DishTypes } = require('../../../src/game/dishTypes.js');
 
 describe('Player', () => {
     let player;
@@ -168,7 +168,8 @@ describe('Player', () => {
             const drawnCard = player.drawDishCard();
             
             expect(drawnCard).toBeDefined();
-            expect(player.dishCardsDiscardPile).toHaveLength(0);
+            // The card drawn should be added to the discard pile
+            expect(player.dishCardsDiscardPile).toHaveLength(1);
             expect(player.dishCardsDrawPile).toHaveLength(initialDiscardCount - 1);
         });
 
@@ -328,6 +329,22 @@ describe('Player', () => {
             const mockDoggo = { dishes_eaten: 1, stores_visited: [] };
             
             expect(() => player.hostDoggoCard(mockDoggo)).not.toThrow();
+        });
+    });
+
+    describe('toResponse', () => {
+        test('should return correct response', () => {
+            console.log("current test--------------------------------");
+            player.addMoney(20);
+            player.acquireStoreCard(new Store(StoreTypes.TOY_SHOP));
+            player.acquireStoreCard(new Store(StoreTypes.GROOMING_SPA));
+            console.log("player money: " + player.money);
+            player.buildStore(0);
+            player.buildStore(1);
+            console.log("player money: " + player.money);
+            player.hostDoggoCard({ dishes_eaten: 1, stores_visited:[StoreTypes.GROOMING_SPA] });
+            const response = player.toResponse();
+            console.log(response);
         });
     });
 }); 

@@ -15,10 +15,16 @@ class Dish {
         return this.type.build_cost;
     }
     getIncome() {
-        return this.type.income_per_doggo;
+        return this.type.income;
     }
     getSpecialEffect() {
         return this.type.special_effect;
+    }
+    toResponse() {
+        return {
+            type: this.type.type,
+            cardId: this.cardId
+        };
     }
 }
 

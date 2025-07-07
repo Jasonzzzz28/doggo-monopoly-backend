@@ -6,10 +6,8 @@ const cors = require('cors');
 // Import routes and socket handlers
 const apiRoutes = require('./api/routes.js');
 const { 
-    join_game, 
-    waiting_room_update, 
+    connect_to_game, 
     start_game, 
-    game_started 
 } = require('./sockets/handlers.js');
 
 // Create Express app
@@ -45,8 +43,8 @@ io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}`);
 
     // Register all WebSocket event handlers
-    socket.on('join_game', (data) => {
-        join_game(io, socket, data);
+    socket.on('connect_to_game', (data) => {
+        connect_to_game(io, socket, data);
     });
 
     socket.on('start_game', (data) => {
@@ -91,6 +89,11 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
     console.log('SIGINT received, shutting down gracefully');
+    //disconnect all players
+    io.sockets.sockets.forEach(socket => {
+        socket.disconnect();
+    });
+    //close server
     server.close(() => {
         console.log('Server closed');
         process.exit(0);

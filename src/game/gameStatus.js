@@ -4,4 +4,4 @@ const GameStatus = Object.freeze({
     ENDED: 'ended'
 });
 
-module.exports = { GameStatus };
+module.exports = GameStatus;

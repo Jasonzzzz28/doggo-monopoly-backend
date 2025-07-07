@@ -1,51 +1,34 @@
-const memoryStore = require('../game/memoryStore.js');
-const { GameStatus } = require('../game/game.js');
+const dataBase = require('../services/dataService.js');
+const GameStatus = require('../game/gameStatus.js');
+const { dishTypeMapper } = require('../game/dishTypes.js');
 
 /**
  * Called when a player wants to join a game using a game code and name.
  * Adds the player to the game's player list and notifies all players in the room.
  * @param {object} io - The socket.io server instance
  * @param {object} socket - The socket for the joining player
- * @param {object} data - { gameId, playerId, playerName, avatar }
+ * @param {object} data - { gameId, playerId }
  */
-function join_game(io, socket, data) {
-    const { gameId, playerId, playerName, avatar } = data;
-    const game = memoryStore.get(gameId);
+function connect_to_game(io, socket, data) {
+    const { gameId, playerId } = data;
+    const game = dataBase.get(gameId);
     if (!game) {
         socket.emit('error', { message: 'Game not found.' });
         return;
     }
-    if (game.status !== GameStatus.WAITING) {
-        socket.emit('error', { message: 'Game has already started.' });
+    if (!game.players.includes(playerId)) {
+        socket.emit('error', { message: 'Player not found in game.' });
         return;
     }
-    if (game.isFull()) {
-        socket.emit('error', { message: 'Game is full.' });
-        return;
-    }
-    const added = game.addPlayer(playerId, playerName, avatar);
-    if (!added) {
-        socket.emit('error', { message: 'Player could not be added.' });
+    if (game.status === GameStatus.ENDED) {
+        socket.emit('error', { message: 'Game has ended.' });
         return;
     }
     socket.join(gameId);
     // Notify all players in the room of the updated waiting room
-    waiting_room_update(io, gameId);
-}
-
-/**
- * Sends the current waiting room status to all players in the game room.
- * @param {object} io - The socket.io server instance
- * @param {string} gameId - The game room ID
- */
-function waiting_room_update(io, gameId) {
-    const game = memoryStore.get(gameId);
-    if (!game) return;
-    const players = game.getAllPlayers().map(p => p.getWaitingRoomSummary());
-    io.to(gameId).emit('waiting_room_update', {
-        players,
-        maxPlayers: game.requiredPlayers
-    });
+    if (game.status === GameStatus.WAITING) {
+        waiting_room_update(io, gameId);
+    }
 }
 
 /**
@@ -56,18 +39,18 @@ function waiting_room_update(io, gameId) {
  */
 function start_game(io, socket, data) {
     const { gameId, playerId } = data;
-    const game = memoryStore.get(gameId);
+    const game = dataBase.get(gameId);
     if (!game) {
         socket.emit('error', { message: 'Game not found.' });
         return;
     }
-    // Any player in the game can start the game
+    // Only players in the game can start the game
     if (!game.playerOrder.includes(playerId)) {
         socket.emit('error', { message: 'Only players in the game can start the game.' });
         return;
     }
     if (!game.isReadyToStart()) {
-        socket.emit('error', { message: 'Not all players have joined yet.' });
+        socket.emit('error', { message: 'Game is not ready to start or already started.' });
         return;
     }
     const started = game.startGame();
@@ -76,25 +59,64 @@ function start_game(io, socket, data) {
         return;
     }
     // Notify all players that the game has started
-    game_started(io, gameId);
+    game_update(io, gameId);
 }
 
 /**
- * Notifies all players in the game room that the game has started.
+ * Sends the current waiting room status to all players in the game room.
  * @param {object} io - The socket.io server instance
  * @param {string} gameId - The game room ID
  */
-function game_started(io, gameId) {
-    const game = memoryStore.get(gameId);
+function waiting_room_update(io, gameId) {
+    const game = dataBase.get(gameId);
     if (!game) return;
-    io.to(gameId).emit('game_started', {
+    const players = game.getAllPlayers().map(p => p.getWaitingRoomSummary());
+    io.to(gameId).emit('waiting_room_update', players);
+}
+
+/**
+ * Notifies all players in the game room that the game has updated.
+ * @param {object} io - The socket.io server instance
+ * @param {string} gameId - The game room ID
+ */
+function game_update(io, gameId) {
+    const game = dataBase.get(gameId);
+    if (!game) return;
+    io.to(gameId).emit('game_update', {
         gameState: game.getGameState()
     });
 }
 
+function player_buy_dish(io, socket, data) {
+    const { gameId, playerId, dishType } = data;
+    const game = dataBase.get(gameId);
+    if (!game) return;
+    if (playerId !== game.getCurrentPlayerId()) {
+        socket.emit('error', { message: 'Only the current player can buy dishes.' });
+        return;
+    }
+    const success = game.sellPlayerDish(dishTypeMapper[dishType]);
+    if (!success) {
+        socket.emit('error', { message: 'Failed to buy dish.' });
+    }
+    game_update(io, gameId);
+}
+
+function player_buy_store(io, socket, data) {
+    const { gameId, playerId, storeType } = data;
+    const game = dataBase.get(gameId);
+    if (!game) return;
+    if (playerId !== game.getCurrentPlayerId()) {
+        socket.emit('error', { message: 'Only the current player can buy stores.' });
+        return;
+    }
+    const success = game.sellPlayerStore(storeType);
+    if (!success) {
+        socket.emit('error', { message: 'Failed to buy store.' });
+    }
+}
+
 module.exports = {
-    join_game,
-    waiting_room_update,
+    connect_to_game,
     start_game,
-    game_started
 };

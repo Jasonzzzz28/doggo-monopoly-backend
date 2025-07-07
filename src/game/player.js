@@ -1,7 +1,9 @@
 const Store = require('./store');
 const Dish = require('./dish');
-const DishTypes = require('./dishTypes');
+const { StoreTypes } = require('./storeTypes');
+const { DishTypes } = require('./dishTypes');
 const { DoggoCards } = require('./doggoCards');
+const SpecialEffect = require('./specialEffect');
 
 const defaultMoney = 5;
 
@@ -10,11 +12,13 @@ class Player {
         this.id = id;
         this.name = name;
         this.avatar = avatar;
+        this.numOfStoreBuilt = 0;
         this.storeCards = [];
         this.dishCards = this.createDefaultDishCards();
         this.money = defaultMoney;
         this.dishCardsDrawPile = this.createDefaultDishCards();
         this.dishCardsDiscardPile = [];
+        this.extraStoreEarnings = new Map(Object.entries(StoreTypes).map(([key, value]) => [value.type, 0]));
     }
 
     /********** TEMPORARY METHODS **********/
@@ -23,6 +27,8 @@ class Player {
     createDefaultDishCards() {
         return [new Dish(DishTypes.LEVEL_1), new Dish(DishTypes.LEVEL_1), new Dish(DishTypes.LEVEL_1), new Dish(DishTypes.LEVEL_1), new Dish(DishTypes.LEVEL_1), new Dish(DishTypes.LEVEL_1), new Dish(DishTypes.LEVEL_2), new Dish(DishTypes.LEVEL_2)];
     }
+
+    /********** PUBLIC METHODS **********/
 
     /**
      * Acquire a store card from the store market
@@ -49,7 +55,9 @@ class Player {
         return false;
     }
 
-    /********** PUBLIC METHODS **********/
+    getNumOfStoreBuilt() {
+        return this.numOfStoreBuilt;
+    }
 
     buildStore(storeIndex) {
         if (storeIndex < 0 || storeIndex >= this.storeCards.length) {
@@ -64,6 +72,29 @@ class Player {
         }
         this.money -= store.getCost();
         store.build();
+        this.numOfStoreBuilt++;
+
+        switch (store.getSpecialEffect()) {
+            case SpecialEffect.ICE_CREAM_PARLOR_PLUS_TWO_COINS:
+                this.extraStoreEarnings[StoreTypes.ICE_CREAM_PARLOR] += 2;
+                break;
+            case SpecialEffect.DOG_BAR_DOG_PARK_SWIMMING_POOL_PLUS_ONE_COIN:
+                this.extraStoreEarnings[StoreTypes.DOG_BAR] += 1;
+                this.extraStoreEarnings[StoreTypes.DOG_PARK] += 1;
+                this.extraStoreEarnings[StoreTypes.SWIMMING_POOL] += 1;
+                break;
+            case SpecialEffect.TOY_SHOP_PLUS_TWO_COINS:
+                this.extraStoreEarnings[StoreTypes.TOY_SHOP] += 2;
+                break;
+            case SpecialEffect.PET_HOTEL_TREAT_CAFE_PET_FINE_DINING_PLUS_ONE_COIN:
+                this.extraStoreEarnings[StoreTypes.PET_HOTEL] += 1;
+                this.extraStoreEarnings[StoreTypes.TREAT_CAFE] += 1;
+                this.extraStoreEarnings[StoreTypes.PET_FINE_DINING] += 1;
+                break;
+            case SpecialEffect.BONE_BAKERY_PLUS_TWO_COINS:
+                this.extraStoreEarnings[StoreTypes.BONE_BAKERY] += 2;
+                break;
+        }
         return true;
     }
 
@@ -75,14 +106,26 @@ class Player {
     hostDoggoCard(doggo, extraMoney=0) {
         this.money += extraMoney;
         for (let i = 0; i < doggo.dishes_eaten; i++) {
-            const dish = this.drawDishCard();
-            this.money += dish.getIncome();
-            this.dishCardsDiscardPile.push(dish);
+            this.drawDishCard();
         }
         this.storeCards.forEach(store => {
-            // TODO: Add special effect for store later
             if (store.isBuilt() && doggo.stores_visited.includes(store.getType())) {
-                this.money += store.getIncome();
+                this.money += store.getIncome() + this.extraStoreEarnings.get(store.getType().type);
+                switch (store.getSpecialEffect()) {
+                    case SpecialEffect.DICE_ROLL:
+                        this.money += Math.floor(Math.random() * 6) + 1;
+                        break;
+                    case SpecialEffect.DRAW_EXTRA_TWO_DOGGO_CARDS:
+                        this.drawDishCard();
+                        this.drawDishCard();
+                        break;
+                    case SpecialEffect.EARN_MONEY_AS_AMOUNT_DISHES_EATEN:
+                        this.money += doggo.dishes_eaten;
+                        break;
+                    case SpecialEffect.EARN_MONEY_AS_AMOUNT_BUILT_STORES:
+                        this.money += this.numOfStoreBuilt;
+                        break;
+                }
             }
         });
     }
@@ -139,7 +182,13 @@ class Player {
         if (this.dishCardsDrawPile.length === 0) {
             this.shuffleDiscardIntoDraw();
         }
-        return this.dishCardsDrawPile.length > 0 ? this.dishCardsDrawPile.pop() : null;
+        const dish = this.dishCardsDrawPile.pop();
+        if (!dish) {
+            return null;
+        }
+        this.money += dish.getIncome();
+        this.dishCardsDiscardPile.push(dish);
+        return dish;
     }
 
     /**
@@ -190,6 +239,20 @@ class Player {
         return {
             name: this.name,
             avatar: this.avatar
+        };
+    }
+
+    toResponse() {
+        return {
+            id: this.id,
+            name: this.name,
+            avatar: this.avatar,
+            numOfStoreBuilt: this.numOfStoreBuilt,
+            storeCards: this.storeCards.map(store => store.toResponse()),
+            dishCards: this.dishCards.map(dish => dish.toResponse()),
+            money: this.money,
+            dishCardsDiscardPile: this.dishCardsDiscardPile.map(dish => dish.toResponse()),
+            extraStoreEarnings: Object.fromEntries(this.extraStoreEarnings)
         };
     }
 }

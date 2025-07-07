@@ -1,5 +1,5 @@
 const Game = require('../../../src/game/game.js');
-const { GameStatus } = require('../../../src/game/gameStatus.js');
+const GameStatus = require('../../../src/game/gameStatus.js');
 
 describe('Game', () => {
     let game;

@@ -84,6 +84,25 @@ router.get('/game/:gameId', (req, res) => {
     res.status(200).json(game);
 });
 
+router.post('/game/:gameId/join', (req, res) => {
+    const gameId = req.params.gameId;
+    const game = dataBase.get(gameId);
+    if (!game) {
+        return res.status(404).json({ error: 'Game not found' });
+    }
+    if (game.status !== GameStatus.WAITING) {
+        return res.status(400).json({ error: 'Game has already started' });
+    }
+    if (game.isFull()) {
+        return res.status(400).json({ error: 'Game is full' });
+    }
+    const { playerName = "Player-" + game.playerOrder.length, avatar = null } = req.body;
+    const playerId = uuidv4();
+
+    // console.log(`Player ${playerName} joined game ${gameId}`);
+    game.addPlayer(playerId, playerName, avatar);
+    res.status(200).json({ playerId: playerId });
+});
 
 // dev only
 // router.get('/games', (req, res) => {

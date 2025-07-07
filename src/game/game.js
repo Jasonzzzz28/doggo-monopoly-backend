@@ -2,12 +2,15 @@ const Player = require('./player.js');
 const { getRandomDoggoCards } = require('./doggoCards.js');
 const { StoreTypes } = require('./storeTypes.js');
 const Store = require('./store.js');
-const { GameStatus } = require('./gameStatus.js');
+const GameStatus = require('./gameStatus.js');
+const { DishTypes } = require('./dishTypes.js');
 
 const MAX_VISIBLE_DOGGO_CARDS = 4;
 const MAX_VISIBLE_STORE_CARDS = 4;
 const WINNING_MONEY = 50;
 const WINNING_BUILT_STORES = 8;
+// TODO: Add limit for level 4 dishes if needed later
+const MAX_NUM_OF_LEVEL_4_DISHES = 4;
 
 /**
  * Game class for Doggo Monopoly
@@ -33,12 +36,12 @@ class Game {
         };
         this.turnNumber = 0;
         this.createdAt = Math.floor(Date.now() / 1000);
+        // this.level4DishesSold = 0;
     }
 
     isCurrentPlayerWinner() {
         return this.getCurrentPlayer().money >= WINNING_MONEY 
-        && this.getCurrentPlayer().storeCards.length === WINNING_BUILT_STORES
-        && this.getCurrentPlayer().storeCards.every(store => store.isBuilt());
+        && this.getCurrentPlayer().getNumOfStoreBuilt() == WINNING_BUILT_STORES;
     }
 
     /**
@@ -133,10 +136,13 @@ class Game {
         this.status = GameStatus.ENDED;
     }
 
-    /**
-     * Get the current player
-     * @returns {Player|null} - Current player object or null if no players
-     */
+    getCurrentPlayerId() {
+        if (this.playerOrder.length === 0) {
+            return null;
+        }
+        return this.playerOrder[this.currentPlayerIndex];
+    }
+
     getCurrentPlayer() {
         if (this.playerOrder.length === 0) {
             return null;
@@ -255,7 +261,9 @@ class Game {
 
     drawDoggoCard() {
         if (this.npcDoggos.drawPile.length === 0) {
-            return null;
+            // Shuffle discard pile into draw pile
+            this.npcDoggos.drawPile = this.npcDoggos.discardPile.sort(() => Math.random() - 0.5);
+            this.npcDoggos.discardPile = [];
         }
         const card = this.npcDoggos.drawPile.pop();
         return card;
@@ -325,10 +333,15 @@ class Game {
             }
         }
         const doggo = this.npcDoggos.visible[doggoIndex];
-        if (!player.acquireDoggoCard(doggo)) {
+        const extraMoney = this.npcDoggos.extraMoney[doggoIndex];
+        if (!player.acquireDoggoCard(doggo, extraMoney)) {
             return false;
         }
         this.replaceVisibleDoggoCard(doggoIndex);
+        this.npcDoggos.extraMoney[doggoIndex] = 0;
+
+        // Add doggo to discard pile
+        this.npcDoggos.discardPile.push(doggo);
         return true;
     }
 
@@ -344,8 +357,25 @@ class Game {
         return true;
     }
 
+    sellPlayerDish(dishType) {
+        const player = this.getCurrentPlayer();
+        if (!player) {
+            return false;
+        }
+        if (!DishTypes.includes(dishType)) {
+            return false;
+        }
+        if (player.getNetWorth() < dishType.build_cost) {
+            return false;
+        }
+        // TODO: Add limit for level 4 dishes if needed later
+        player.removeMoney(dishType.build_cost);
+        player.addDishCard(new Dish(dishType));
+        return true;
+    }
+
     /**
-     * Get game state summary for client updates
+     * For testing purposes only
      * @returns {Object} - Game state summary
      */
     getGameState() {
@@ -369,6 +399,13 @@ class Game {
                 visible: this.storeMarket.visible,
                 drawPileCount: this.storeMarket.drawPile.length
             }
+        };
+    }
+
+    toResponse() {
+        return {
+            id: this.id,
+            status: this.status,
         };
     }
 }
