@@ -8,7 +8,7 @@ const SpecialEffect = require('./specialEffect');
 const defaultMoney = 5;
 
 class Player {
-    constructor(id, name, avatar) {
+    constructor(id, name, avatar=null) {
         this.id = id;
         this.name = name;
         this.avatar = avatar;
@@ -244,7 +244,6 @@ class Player {
 
     toResponse() {
         return {
-            id: this.id,
             name: this.name,
             avatar: this.avatar,
             numOfStoreBuilt: this.numOfStoreBuilt,

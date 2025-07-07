@@ -23,7 +23,8 @@ class Dish {
     toResponse() {
         return {
             type: this.type.type,
-            cardId: this.cardId
+            // TODO: add cardId when we have cardId
+            cardId: null
         };
     }
 }

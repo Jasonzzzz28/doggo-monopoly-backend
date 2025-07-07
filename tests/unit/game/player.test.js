@@ -334,17 +334,14 @@ describe('Player', () => {
 
     describe('toResponse', () => {
         test('should return correct response', () => {
-            console.log("current test--------------------------------");
             player.addMoney(20);
             player.acquireStoreCard(new Store(StoreTypes.TOY_SHOP));
             player.acquireStoreCard(new Store(StoreTypes.GROOMING_SPA));
-            console.log("player money: " + player.money);
             player.buildStore(0);
             player.buildStore(1);
-            console.log("player money: " + player.money);
             player.hostDoggoCard({ dishes_eaten: 1, stores_visited:[StoreTypes.GROOMING_SPA] });
             const response = player.toResponse();
-            console.log(response);
+            // console.log(response);
         });
     });
 }); 

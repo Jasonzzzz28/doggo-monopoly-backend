@@ -23,6 +23,7 @@ class Game {
         this.requiredPlayers = requiredPlayers;
         this.players = {};
         this.playerOrder = [];
+        this.playerIdToIndex = {};
         this.currentPlayerIndex = 0;
         this.npcDoggos = {
             visible: [],
@@ -36,6 +37,7 @@ class Game {
         };
         this.turnNumber = 0;
         this.createdAt = Math.floor(Date.now() / 1000);
+        this.winnerIndex = null;
         // this.level4DishesSold = 0;
     }
 
@@ -114,6 +116,10 @@ class Game {
         this.initializePlayers();
         this.initializeCardPiles();
 
+        this.playerOrder.forEach((playerId, index) => {
+            this.playerIdToIndex[playerId] = index;
+        });
+
         return true;
     }
 
@@ -134,6 +140,7 @@ class Game {
      */
     endGame() {
         this.status = GameStatus.ENDED;
+        this.winnerIndex = this.currentPlayerIndex;
     }
 
     getCurrentPlayerId() {
@@ -314,6 +321,14 @@ class Game {
         return true;
     }
 
+    currentPlayerBuildStore(index) {
+        const player = this.getCurrentPlayer();
+        if (!player) {
+            return false;
+        }
+        return player.buildStore(index);
+    }
+
     assignDoggoCardToCurrentPlayer(doggoIndex) {
         const player = this.getCurrentPlayer();
         if (!player) {
@@ -334,14 +349,18 @@ class Game {
         }
         const doggo = this.npcDoggos.visible[doggoIndex];
         const extraMoney = this.npcDoggos.extraMoney[doggoIndex];
-        if (!player.acquireDoggoCard(doggo, extraMoney)) {
+        if (!player.hostDoggoCard(doggo, extraMoney)) {
             return false;
         }
         this.replaceVisibleDoggoCard(doggoIndex);
         this.npcDoggos.extraMoney[doggoIndex] = 0;
-
-        // Add doggo to discard pile
         this.npcDoggos.discardPile.push(doggo);
+
+        if (this.isCurrentPlayerWinner()) {
+            this.endGame();
+        }
+        this.nextTurn();
+
         return true;
     }
 
@@ -357,7 +376,7 @@ class Game {
         return true;
     }
 
-    sellPlayerDish(dishType) {
+    sellDishCardToCurrentPlayer(dishType) {
         const player = this.getCurrentPlayer();
         if (!player) {
             return false;
@@ -372,6 +391,14 @@ class Game {
         player.removeMoney(dishType.build_cost);
         player.addDishCard(new Dish(dishType));
         return true;
+    }
+
+    currentPlayerRemoveDishCard(dishIndex) {
+        const player = this.getCurrentPlayer();
+        if (!player) {
+            return false;
+        }
+        return player.removeDishCardFromDiscardPile(dishIndex);
     }
 
     /**
@@ -406,6 +433,24 @@ class Game {
         return {
             id: this.id,
             status: this.status,
+            requiredPlayers: this.requiredPlayers,
+            // replace playerId with player order index
+            players: Object.entries(this.players).reduce((acc, [playerId, player]) => { 
+                acc[this.playerIdToIndex[playerId]] = player.toResponse();
+                return acc;
+            }, {}),
+            // playerOrder: this.playerOrder,
+            currentPlayerIndex: this.currentPlayerIndex,
+            npcDoggos: {
+                visible: this.npcDoggos.visible.map(doggo => doggo.id),
+                discardPile: this.npcDoggos.discardPile.map(doggo => doggo.id),
+                extraMoney: this.npcDoggos.extraMoney
+            },
+            storeMarket: {
+                visible: this.storeMarket.visible.map(store => store.toResponse())
+            },
+            turnNumber: this.turnNumber,
+            createdAt: this.createdAt
         };
     }
 }

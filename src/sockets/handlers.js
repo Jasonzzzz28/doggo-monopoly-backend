@@ -1,6 +1,7 @@
 const dataBase = require('../services/dataService.js');
 const GameStatus = require('../game/gameStatus.js');
 const { dishTypeMapper } = require('../game/dishTypes.js');
+const Game = require('../game/game.js');
 
 /**
  * Called when a player wants to join a game using a game code and name.
@@ -83,7 +84,7 @@ function game_update(io, gameId) {
     const game = dataBase.get(gameId);
     if (!game) return;
     io.to(gameId).emit('game_update', {
-        gameState: game.getGameState()
+        game: game.toResponse()
     });
 }
 
@@ -95,28 +96,73 @@ function player_buy_dish(io, socket, data) {
         socket.emit('error', { message: 'Only the current player can buy dishes.' });
         return;
     }
-    const success = game.sellPlayerDish(dishTypeMapper[dishType]);
+    const success = game.sellDishCardToCurrentPlayer(dishTypeMapper[dishType]);
     if (!success) {
         socket.emit('error', { message: 'Failed to buy dish.' });
     }
     game_update(io, gameId);
 }
 
+function player_remove_dish(io, socket, data) {
+    const { gameId, playerId, dishIndex } = data;
+    const game = dataBase.get(gameId);
+    if (!game) return;
+    if (playerId !== game.getCurrentPlayerId()) {
+        socket.emit('error', { message: 'Only the current player can remove dishes.' });
+        return;
+    }
+    const success = game.currentPlayerRemoveDishCard(dishIndex);
+    if (!success) {
+        socket.emit('error', { message: 'Failed to remove dish.' });
+    }
+    game_update(io, gameId);
+}
+
 function player_buy_store(io, socket, data) {
-    const { gameId, playerId, storeType } = data;
+    const { gameId, playerId, storeIndex } = data;
     const game = dataBase.get(gameId);
     if (!game) return;
     if (playerId !== game.getCurrentPlayerId()) {
         socket.emit('error', { message: 'Only the current player can buy stores.' });
         return;
     }
-    const success = game.sellPlayerStore(storeType);
+    const store = game.storeMarket.visible[storeIndex];
+    if (!store) {
+        socket.emit('error', { message: 'Store not found.' });
+        return;
+    }
+    const success = game.sellStoreCardToCurrentPlayer(store);
     if (!success) {
         socket.emit('error', { message: 'Failed to buy store.' });
     }
+    game_update(io, gameId);
+}
+
+function player_host_doggo(io, socket, data) {
+    const { gameId, playerId, doggoIndex } = data;
+    const game = dataBase.get(gameId);
+    if (!game) return;
+    if (playerId !== game.getCurrentPlayerId()) {
+        socket.emit('error', { message: 'Only the current player can host doggos.' });
+        return;
+    }
+    const doggo = game.npcDoggos.visible[doggoIndex];
+    if (!doggo) {
+        socket.emit('error', { message: 'Doggo not found.' });
+        return;
+    }
+    const success = game.assignDoggoCardToCurrentPlayer(doggo);
+    if (!success) {
+        socket.emit('error', { message: 'Failed to host doggo.' });
+    }
+    game_update(io, gameId);
 }
 
 module.exports = {
     connect_to_game,
     start_game,
+    player_buy_dish,
+    player_remove_dish,
+    player_buy_store,
+    player_host_doggo
 };

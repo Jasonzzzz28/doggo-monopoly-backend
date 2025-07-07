@@ -243,4 +243,28 @@ describe('Game', () => {
             expect(detailedState.storeMarket).toBeDefined();
         });
     });
+
+    describe('toResponse', () => {
+        test('test toResponse', () => {
+            console.log("current test--------------------------------");
+            game = new Game('test-game-toResponse', 2);
+            game.addPlayer('player1', 'Alice', '/avatar1.png');
+            game.addPlayer('player2', 'Bob', '/avatar2.png');
+            game.startGame();
+
+            const response = game.toResponse();
+            console.dir(response, { depth: null });
+            game.assignDoggoCardToCurrentPlayer(0);
+            const response2 = game.toResponse();
+            console.dir(response2, { depth: null });
+            game.assignDoggoCardToCurrentPlayer(0);
+            const response3 = game.toResponse();
+            console.dir(response3, { depth: null });
+            game.sellStoreCardToCurrentPlayer(0);
+            game.currentPlayerBuildStore(0);
+            game.assignDoggoCardToCurrentPlayer(0);
+            const response4 = game.toResponse();
+            console.dir(response4, { depth: null });
+        });
+    });
 });

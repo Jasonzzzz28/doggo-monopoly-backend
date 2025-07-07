@@ -38,7 +38,7 @@ describe('getRandomDoggoCards', () => {
     });
 
     test('should return all cards if count exceeds available cards', () => {
-        const cards = getRandomDoggoCards(10);
+        const cards = getRandomDoggoCards(20);
         expect(cards).toHaveLength(Object.values(DoggoCards).length);
     });
 });

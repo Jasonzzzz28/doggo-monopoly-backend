@@ -8,6 +8,10 @@ const apiRoutes = require('./api/routes.js');
 const { 
     connect_to_game, 
     start_game, 
+    player_buy_dish,
+    player_remove_dish,
+    player_buy_store,
+    player_host_doggo
 } = require('./sockets/handlers.js');
 
 // Create Express app
@@ -49,6 +53,22 @@ io.on('connection', (socket) => {
 
     socket.on('start_game', (data) => {
         start_game(io, socket, data);
+    });
+
+    socket.on('player_buy_dish', (data) => {
+        player_buy_dish(io, socket, data);
+    });
+
+    socket.on('player_remove_dish', (data) => {
+        player_remove_dish(io, socket, data);
+    });
+
+    socket.on('player_buy_store', (data) => {
+        player_buy_store(io, socket, data);
+    });
+
+    socket.on('player_host_doggo', (data) => { 
+        player_host_doggo(io, socket, data);
     });
 
     // Handle disconnection
