@@ -250,6 +250,8 @@ class Player {
             storeCards: this.storeCards.map(store => store.toResponse()),
             dishCards: this.dishCards.map(dish => dish.toResponse()),
             money: this.money,
+            dishCardsDrawPileLength: this.dishCardsDrawPile.length,
+            dishCardsDiscardPileLength: this.dishCardsDiscardPile.length,
             dishCardsDiscardPile: this.dishCardsDiscardPile.map(dish => dish.toResponse()),
             extraStoreEarnings: Object.fromEntries(this.extraStoreEarnings)
         };

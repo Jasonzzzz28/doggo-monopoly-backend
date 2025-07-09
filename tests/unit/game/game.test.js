@@ -1,5 +1,6 @@
 const Game = require('../../../src/game/game.js');
 const GameStatus = require('../../../src/game/gameStatus.js');
+const DoggoCards = require('../../../src/game/doggoCards.js');
 
 describe('Game', () => {
     let game;
@@ -265,6 +266,18 @@ describe('Game', () => {
             game.assignDoggoCardToCurrentPlayer(0);
             const response4 = game.toResponse();
             console.dir(response4, { depth: null });
+        });
+    });
+
+    describe('getWaitingRoomSummary', () => {
+        test('test getWaitingRoomSummary', () => {
+            game = new Game('test-game-getWaitingRoomSummary', 2);
+            game.addPlayer('player1', 'Alice', '/avatar1.png');
+            game.addPlayer('player2', 'Bob', '/avatar2.png');
+            game.startGame();
+
+            const waitingRoomSummary = game.getWaitingRoomSummary();
+            console.dir(waitingRoomSummary, { depth: null });
         });
     });
 });

@@ -23,7 +23,7 @@ class Game {
         this.requiredPlayers = requiredPlayers;
         this.players = {};
         this.playerOrder = [];
-        this.playerIdToIndex = {};
+        this.playerIdToSimpleId = {};
         this.currentPlayerIndex = 0;
         this.npcDoggos = {
             visible: [],
@@ -65,6 +65,7 @@ class Game {
         const player = new Player(playerId, playerName, avatar);
         this.players[playerId] = player;
         this.playerOrder.push(playerId);
+        this.playerIdToSimpleId[playerId] = this.playerOrder.length;
 
         return true;
     }
@@ -115,10 +116,6 @@ class Game {
 
         this.initializePlayers();
         this.initializeCardPiles();
-
-        this.playerOrder.forEach((playerId, index) => {
-            this.playerIdToIndex[playerId] = index;
-        });
 
         return true;
     }
@@ -429,17 +426,24 @@ class Game {
         };
     }
 
+    getWaitingRoomSummary() {
+        return JSON.stringify(Object.entries(this.players).reduce((acc, [playerId, player]) => { 
+            acc[this.playerIdToSimpleId[playerId]] = player.getWaitingRoomSummary();
+            return acc;
+        }, {}));
+    }
+
     toResponse() {
-        return {
+        return JSON.stringify({
             id: this.id,
             status: this.status,
             requiredPlayers: this.requiredPlayers,
-            // replace playerId with player order index
+            // simple ids are for client-side use
             players: Object.entries(this.players).reduce((acc, [playerId, player]) => { 
-                acc[this.playerIdToIndex[playerId]] = player.toResponse();
+                acc[this.playerIdToSimpleId[playerId].toString()] = player.toResponse();
                 return acc;
             }, {}),
-            // playerOrder: this.playerOrder,
+            playerOrder: this.playerOrder.map(playerId => this.playerIdToSimpleId[playerId].toString()),
             currentPlayerIndex: this.currentPlayerIndex,
             npcDoggos: {
                 visible: this.npcDoggos.visible.map(doggo => doggo.id),
@@ -451,7 +455,7 @@ class Game {
             },
             turnNumber: this.turnNumber,
             createdAt: this.createdAt
-        };
+        });
     }
 }
 

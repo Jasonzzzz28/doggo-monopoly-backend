@@ -1,10 +1,19 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const Game = require('../game/game.js');
-const { createPlayer } = require('../game/player.js');
 const dataBase = require('../services/dataService.js');
+const GameStatus = require('../game/gameStatus.js');
 
 const router = express.Router();
+
+//Uncomment to bypass CORS for local testing
+router.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  next();
+});
 
 /**
  * POST /create-game
@@ -96,15 +105,20 @@ router.post('/game/:gameId/join', (req, res) => {
     if (game.isFull()) {
         return res.status(400).json({ error: 'Game is full' });
     }
-    const { playerName = "Player-" + game.playerOrder.length, avatar = null } = req.body;
+    let { playerName, avatar = null } = req.body;
     const playerId = uuidv4();
 
-    // console.log(`Player ${playerName} joined game ${gameId}`);
-    game.addPlayer(playerId, playerName, avatar);
-    res.status(200).json({ playerId: playerId });
+    if (!playerName || playerName.length === 0) {
+        playerName = "Player-" + String(game.playerOrder.length + 1);
+    }
+    const success = game.addPlayer(playerId, playerName, avatar);
+    if (!success) {
+        return res.status(400).json({ error: 'Failed to add player' });
+    }
+    res.status(200).json({ playerId: playerId, playerSimpleId: game.playerIdToSimpleId[playerId], playerName: playerName, numberOfPlayers: game.requiredPlayers });
 });
 
-// dev only
+// // dev only
 // router.get('/games', (req, res) => {
 //     try {
 //         const games = Array.from(dataBase.values()).map(game => ({

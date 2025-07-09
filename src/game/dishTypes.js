@@ -9,7 +9,7 @@ const DishTypes = Object.freeze({
         income: 1,
         special_effect: SpecialEffect.NO_EFFECT,
         color: "gray",
-        icon: "fas fa-utensils",
+        icon: "fas fa-bowl-food",
         image: "basic-dish.jpg"
     }),
     LEVEL_2: Object.freeze({
@@ -31,7 +31,7 @@ const DishTypes = Object.freeze({
         income: 3,
         special_effect: SpecialEffect.NO_EFFECT,
         color: "purple",
-        icon: "fas fa-crown",
+        icon: "fas fa-wine-glass",
         image: "premium-dish.jpg"
     }),
     LEVEL_4: Object.freeze({
@@ -42,7 +42,7 @@ const DishTypes = Object.freeze({
         income: 2,
         special_effect: SpecialEffect.DICE_ROLL,
         color: "gold",
-        icon: "fas fa-star",
+        icon: "fas fa-crown",
         image: "specialty-dish.jpg"
     })
 });

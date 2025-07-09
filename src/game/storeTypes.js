@@ -53,7 +53,7 @@ const StoreTypes = Object.freeze({
         income_per_doggo: 4,
         special_effect: SpecialEffect.NO_EFFECT,
         color: "pink",
-        icon: "fas fa-utensils",
+        icon: "fas fa-coffee",
         image: "treat-cafe.jpg"
     }),
     PET_CLINIC: Object.freeze({
@@ -74,8 +74,8 @@ const StoreTypes = Object.freeze({
         build_cost: 9,
         income_per_doggo: 6,
         special_effect: SpecialEffect.NO_EFFECT,
-        color: "indigo",
-        icon: "fas fa-utensils",
+        color: "#81d8d0",
+        icon: "fas fa-champagne-glasses",
         image: "pet-fine-dining.jpg"
     }),
     SWIMMING_POOL: Object.freeze({
@@ -85,7 +85,7 @@ const StoreTypes = Object.freeze({
         build_cost: 5,
         income_per_doggo: 2,
         special_effect: SpecialEffect.ICE_CREAM_PARLOR_PLUS_TWO_COINS,
-        color: "cyan",
+        color: "#338dff",
         icon: "fas fa-swimming-pool",
         image: "swimming-pool.jpg"
     }),
@@ -96,8 +96,8 @@ const StoreTypes = Object.freeze({
         build_cost: 5,
         income_per_doggo: 2,
         special_effect: SpecialEffect.DOG_BAR_DOG_PARK_SWIMMING_POOL_PLUS_ONE_COIN,
-        color: "yellow",
-        icon: "fas fa-bed",
+        color: "#ffcd25",
+        icon: "fas fa-hotel",
         image: "pet-hotel.jpg"
     }),
     ICE_CREAM_PARLOR: Object.freeze({
@@ -107,7 +107,7 @@ const StoreTypes = Object.freeze({
         build_cost: 5,
         income_per_doggo: 2,
         special_effect: SpecialEffect.TOY_SHOP_PLUS_TWO_COINS,
-        color: "sky",
+        color: "#f1d1f1",
         icon: "fas fa-ice-cream",
         image: "ice-cream-parlor.jpg"
     }),
@@ -118,7 +118,7 @@ const StoreTypes = Object.freeze({
         build_cost: 5,
         income_per_doggo: 2,
         special_effect: SpecialEffect.PET_HOTEL_TREAT_CAFE_PET_FINE_DINING_PLUS_ONE_COIN,
-        color: "rose",
+        color: "#85bb65",
         icon: "fas fa-money-bill",
         image: "dog-atm.jpg"
     }),
@@ -129,7 +129,7 @@ const StoreTypes = Object.freeze({
         build_cost: 5,
         income_per_doggo: 2,
         special_effect: SpecialEffect.BONE_BAKERY_PLUS_TWO_COINS,
-        color: "yellow",
+        color: "#f5a623",
         icon: "fas fa-beer",
         image: "dog-bar.jpg"
     }),

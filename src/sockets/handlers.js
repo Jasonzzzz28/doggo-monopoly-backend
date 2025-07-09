@@ -11,18 +11,23 @@ const Game = require('../game/game.js');
  * @param {object} data - { gameId, playerId }
  */
 function connect_to_game(io, socket, data) {
+    console.log('connect_to_game: ' + data);
     const { gameId, playerId } = data;
     const game = dataBase.get(gameId);
     if (!game) {
         socket.emit('error', { message: 'Game not found.' });
+        console.log('Game not found.');
+        console.log(gameId);
         return;
     }
-    if (!game.players.includes(playerId)) {
+    if (!(playerId in game.players)) {
         socket.emit('error', { message: 'Player not found in game.' });
+        console.log('Player not found in game.');
         return;
     }
     if (game.status === GameStatus.ENDED) {
         socket.emit('error', { message: 'Game has ended.' });
+        console.log('Game has ended.');
         return;
     }
     socket.join(gameId);
@@ -39,27 +44,35 @@ function connect_to_game(io, socket, data) {
  * @param {object} data - { gameId, playerId }
  */
 function start_game(io, socket, data) {
+    console.log('start_game called: ' + data);
     const { gameId, playerId } = data;
     const game = dataBase.get(gameId);
     if (!game) {
+        console.log('Start game: Game not found.');
         socket.emit('error', { message: 'Game not found.' });
         return;
     }
     // Only players in the game can start the game
     if (!game.playerOrder.includes(playerId)) {
+        console.log('Start game: Only players in the game can start the game.');
         socket.emit('error', { message: 'Only players in the game can start the game.' });
         return;
     }
     if (!game.isReadyToStart()) {
+        console.log('Start game: Game is not ready to start or already started.');
         socket.emit('error', { message: 'Game is not ready to start or already started.' });
         return;
     }
+    console.log('Game started wtf. ' + gameId);
     const started = game.startGame();
+    console.log('Game started0. ' + gameId);
     if (!started) {
+        console.log('Game could not be started.');
         socket.emit('error', { message: 'Game could not be started.' });
         return;
     }
     // Notify all players that the game has started
+    console.log('Game started. ' + gameId);
     game_update(io, gameId);
 }
 
@@ -69,10 +82,11 @@ function start_game(io, socket, data) {
  * @param {string} gameId - The game room ID
  */
 function waiting_room_update(io, gameId) {
+    console.log('waiting_room_update: ' + gameId);
     const game = dataBase.get(gameId);
     if (!game) return;
-    const players = game.getAllPlayers().map(p => p.getWaitingRoomSummary());
-    io.to(gameId).emit('waiting_room_update', players);
+    const summary = game.getWaitingRoomSummary();
+    io.to(gameId).emit('waiting_room_update', summary);
 }
 
 /**
