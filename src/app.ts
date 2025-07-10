@@ -1,18 +1,18 @@
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
-const cors = require('cors');
+import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
 
 // Import routes and socket handlers
-const apiRoutes = require('./api/routes.js');
-const { 
+import apiRoutes from './api/routes';
+import { 
     connect_to_game, 
     start_game, 
     player_buy_dish,
     player_remove_dish,
     player_buy_store,
     player_host_doggo
-} = require('./sockets/handlers.js');
+} from './sockets/handlers';
 
 // Create Express app
 const app = express();
@@ -22,7 +22,7 @@ const PORT = process.env.PORT || 3001;
 const server = http.createServer(app);
 
 // Attach Socket.IO server to HTTP server
-const io = socketIo(server, {
+const io = new Server(server, {
     cors: {
         origin: "*", // In production, replace with your frontend URL
         methods: ["GET", "POST"]
@@ -38,7 +38,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api', apiRoutes);
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (req: express.Request, res: express.Response) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
@@ -78,7 +78,7 @@ io.on('connection', (socket) => {
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error('Error:', err.stack);
     res.status(500).json({ 
         error: 'Something went wrong!',
@@ -120,4 +120,4 @@ process.on('SIGINT', () => {
     });
 });
 
-module.exports = { app, server, io };
+export { app, server, io }; 

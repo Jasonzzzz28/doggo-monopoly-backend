@@ -1,9 +1,10 @@
-const Player = require('./player.js');
-const { getRandomDoggoCards } = require('./doggoCards.js');
-const { StoreTypes } = require('./storeTypes.js');
-const Store = require('./store.js');
-const GameStatus = require('./gameStatus.js');
-const { DishTypes } = require('./dishTypes.js');
+import { GameStatus, GameState, GameResponse } from '../types';
+import { Player } from './player';
+import { getRandomDoggoCards } from './doggoCards';
+import { StoreTypes } from './storeTypes';
+import { Store } from './store';
+import { Dish } from './dish';
+import { DishTypes } from './dishTypes';
 
 const MAX_VISIBLE_DOGGO_CARDS = 4;
 const MAX_VISIBLE_STORE_CARDS = 4;
@@ -16,8 +17,29 @@ const MAX_NUM_OF_LEVEL_4_DISHES = 4;
  * Game class for Doggo Monopoly
  * Manages the overall game state, players, and game flow
  */
-class Game {
-    constructor(id, requiredPlayers) {
+export class Game {
+    public id: string;
+    public status: GameStatus;
+    public requiredPlayers: number;
+    public players: Record<string, Player>;
+    public playerOrder: string[];
+    public playerIdToSimpleId: Record<string, number>;
+    public currentPlayerIndex: number;
+    public npcDoggos: {
+        visible: any[];
+        discardPile: any[];
+        drawPile: any[];
+        extraMoney: number[];
+    };
+    public storeMarket: {
+        visible: Store[];
+        drawPile: Store[];
+    };
+    public turnNumber: number;
+    public createdAt: number;
+    public winnerIndex: number | null;
+
+    constructor(id: string, requiredPlayers: number) {
         this.id = id;
         this.status = GameStatus.WAITING;
         this.requiredPlayers = requiredPlayers;
@@ -38,22 +60,23 @@ class Game {
         this.turnNumber = 0;
         this.createdAt = Math.floor(Date.now() / 1000);
         this.winnerIndex = null;
-        // this.level4DishesSold = 0;
     }
 
-    isCurrentPlayerWinner() {
-        return this.getCurrentPlayer().money >= WINNING_MONEY 
-        && this.getCurrentPlayer().getNumOfStoreBuilt() == WINNING_BUILT_STORES;
+    isCurrentPlayerWinner(): boolean {
+        const currentPlayer = this.getCurrentPlayer();
+        if (!currentPlayer) return false;
+        return currentPlayer.getNetWorth() >= WINNING_MONEY 
+        && currentPlayer.getNumOfStoreBuilt() === WINNING_BUILT_STORES;
     }
 
     /**
      * Add a player to the game
-     * @param {string} playerId - Unique player identifier
-     * @param {string} playerName - Player's display name
-     * @param {string} avatar - Path to player's avatar image
-     * @returns {boolean} - True if player was added successfully
+     * @param playerId - Unique player identifier
+     * @param playerName - Player's display name
+     * @param avatar - Path to player's avatar image
+     * @returns True if player was added successfully
      */
-    addPlayer(playerId, playerName, avatar) {
+    addPlayer(playerId: string, playerName: string, avatar: string | null): boolean {
         if (this.players[playerId]) {
             return false; // Player already exists
         }
@@ -72,10 +95,10 @@ class Game {
 
     /**
      * Remove a player from the game
-     * @param {string} playerId - ID of player to remove
-     * @returns {boolean} - True if player was removed successfully
+     * @param playerId - ID of player to remove
+     * @returns True if player was removed successfully
      */
-    removePlayer(playerId) {
+    removePlayer(playerId: string): boolean {
         if (!this.players[playerId]) {
             return false; // Player doesn't exist
         }
@@ -99,9 +122,9 @@ class Game {
 
     /**
      * Start the game
-     * @returns {boolean} - True if game started successfully
+     * @returns True if game started successfully
      */
-    startGame() {
+    startGame(): boolean {
         if (this.playerOrder.length !== this.requiredPlayers) {
             return false; // Need exactly the required number of players
         }
@@ -120,7 +143,7 @@ class Game {
         return true;
     }
 
-    initializePlayers() {
+    private initializePlayers(): void {
         this.playerOrder = this.playerOrder.sort(() => Math.random() - 0.5);
         if (this.playerOrder.length < 2) {
             return;
@@ -135,19 +158,19 @@ class Game {
     /**
      * End the game
      */
-    endGame() {
+    endGame(): void {
         this.status = GameStatus.ENDED;
         this.winnerIndex = this.currentPlayerIndex;
     }
 
-    getCurrentPlayerId() {
+    getCurrentPlayerId(): string | null {
         if (this.playerOrder.length === 0) {
             return null;
         }
         return this.playerOrder[this.currentPlayerIndex];
     }
 
-    getCurrentPlayer() {
+    getCurrentPlayer(): Player | null {
         if (this.playerOrder.length === 0) {
             return null;
         }
@@ -158,7 +181,7 @@ class Game {
     /**
      * Move to the next player's turn
      */
-    nextTurn() {
+    nextTurn(): void {
         if (this.playerOrder.length === 0) {
             return;
         }
@@ -169,42 +192,42 @@ class Game {
 
     /**
      * Get a specific player by ID
-     * @param {string} playerId - Player ID to find
-     * @returns {Player|null} - Player object or null if not found
+     * @param playerId - Player ID to find
+     * @returns Player object or null if not found
      */
-    getPlayer(playerId) {
+    getPlayer(playerId: string): Player | null {
         return this.players[playerId] || null;
     }
 
     /**
      * Get all players as an array
-     * @returns {Player[]} - Array of all players
+     * @returns Array of all players
      */
-    getAllPlayers() {
+    getAllPlayers(): Player[] {
         return Object.values(this.players);
     }
 
     /**
      * Get the number of players in the game
-     * @returns {number} - Number of players
+     * @returns Number of players
      */
-    getPlayerCount() {
+    getPlayerCount(): number {
         return this.playerOrder.length;
     }
 
     /**
      * Check if the game is ready to start (has exact number of required players)
-     * @returns {boolean} - True if game is ready to start
+     * @returns True if game is ready to start
      */
-    isReadyToStart() {
+    isReadyToStart(): boolean {
         return this.status === GameStatus.WAITING && this.playerOrder.length === this.requiredPlayers;
     }
 
     /**
      * Check if the game is full (has reached required number of players)
-     * @returns {boolean} - True if game is full
+     * @returns True if game is full
      */
-    isFull() {
+    isFull(): boolean {
         return this.playerOrder.length >= this.requiredPlayers;
     }
 
@@ -212,7 +235,7 @@ class Game {
      * Initialize card piles with default cards
      * This would typically load from JSON files or database
      */
-    initializeCardPiles() {
+    private initializeCardPiles(): void {
         // Initialize NPC doggo cards
         this.npcDoggos.visible = [];
         this.npcDoggos.discardPile = [];
@@ -226,23 +249,23 @@ class Game {
         this.drawInitialVisibleCards();
     }
 
-    initializeDoggoCards() {
+    private initializeDoggoCards(): void {
         this.npcDoggos.drawPile = getRandomDoggoCards(6);
     }
 
-    initializeStoreCards() {
+    private initializeStoreCards(): void {
         this.storeMarket.drawPile = this.setUpRandomStoreCards();
     }
     
     // TODO: Modify to use actual store cards when we have them
-    setUpRandomStoreCards() {
+    private setUpRandomStoreCards(): Store[] {
         const storeTypes = Object.values(StoreTypes);
-        const storeCards = [];
+        const storeCards: Store[] = [];
 
         // Create 3 store objects for each type
         storeTypes.forEach(type => {
             for (let i = 0; i < 3; i++) {
-                storeCards.push(new Store(type, `${type}_${i}`));
+                storeCards.push(new Store(type, `${type.type}_${i}`));
             }
         });
 
@@ -255,42 +278,46 @@ class Game {
         return storeCards;
     }
 
-    drawStoreCard() {
+    private drawStoreCard(): Store | null {
         if (this.storeMarket.drawPile.length === 0) {
             return null;
         }
         const card = this.storeMarket.drawPile.pop();
-        return card;
+        return card || null;
     }
 
-    drawDoggoCard() {
+    private drawDoggoCard(): any | null {
         if (this.npcDoggos.drawPile.length === 0) {
             // Shuffle discard pile into draw pile
             this.npcDoggos.drawPile = this.npcDoggos.discardPile.sort(() => Math.random() - 0.5);
             this.npcDoggos.discardPile = [];
         }
         const card = this.npcDoggos.drawPile.pop();
-        return card;
+        return card || null;
     }
 
     /**
      * Draw cards to make visible piles up to their maximum size
      */
-    drawInitialVisibleCards() {
+    private drawInitialVisibleCards(): void {
         // Draw up to 4 visible NPC doggo cards
         while (this.npcDoggos.visible.length < MAX_VISIBLE_DOGGO_CARDS && this.npcDoggos.drawPile.length > 0) {
             const card = this.npcDoggos.drawPile.pop();
-            this.npcDoggos.visible.push(card);
+            if (card) {
+                this.npcDoggos.visible.push(card);
+            }
         }
 
         // Draw up to 4 visible store cards
         while (this.storeMarket.visible.length < MAX_VISIBLE_STORE_CARDS && this.storeMarket.drawPile.length > 0) {
             const card = this.storeMarket.drawPile.pop();
-            this.storeMarket.visible.push(card);
+            if (card) {
+                this.storeMarket.visible.push(card);
+            }
         }
     }
 
-    sellStoreCardToCurrentPlayer(storeIndex) {
+    sellStoreCardToCurrentPlayer(storeIndex: number): boolean {
         const player = this.getCurrentPlayer();
         if (!player) {
             return false;
@@ -306,7 +333,7 @@ class Game {
         return true;
     }
     
-    replaceVisibleStoreCard(storeIndex) {
+    private replaceVisibleStoreCard(storeIndex: number): boolean {
         if (storeIndex < 0 || storeIndex >= this.storeMarket.visible.length) {
             return false;
         }
@@ -318,7 +345,7 @@ class Game {
         return true;
     }
 
-    currentPlayerBuildStore(index) {
+    currentPlayerBuildStore(index: number): boolean {
         const player = this.getCurrentPlayer();
         if (!player) {
             return false;
@@ -326,7 +353,7 @@ class Game {
         return player.buildStore(index);
     }
 
-    assignDoggoCardToCurrentPlayer(doggoIndex) {
+    assignDoggoCardToCurrentPlayer(doggoIndex: number): boolean {
         const player = this.getCurrentPlayer();
         if (!player) {
             return false;
@@ -346,9 +373,7 @@ class Game {
         }
         const doggo = this.npcDoggos.visible[doggoIndex];
         const extraMoney = this.npcDoggos.extraMoney[doggoIndex];
-        if (!player.hostDoggoCard(doggo, extraMoney)) {
-            return false;
-        }
+        player.hostDoggoCard(doggo, extraMoney);
         this.replaceVisibleDoggoCard(doggoIndex);
         this.npcDoggos.extraMoney[doggoIndex] = 0;
         this.npcDoggos.discardPile.push(doggo);
@@ -361,7 +386,7 @@ class Game {
         return true;
     }
 
-    replaceVisibleDoggoCard(doggoIndex) {
+    private replaceVisibleDoggoCard(doggoIndex: number): boolean {
         if (doggoIndex < 0 || doggoIndex >= this.npcDoggos.visible.length) {
             return false;
         }
@@ -373,12 +398,12 @@ class Game {
         return true;
     }
 
-    sellDishCardToCurrentPlayer(dishType) {
+    sellDishCardToCurrentPlayer(dishType: any): boolean {
         const player = this.getCurrentPlayer();
         if (!player) {
             return false;
         }
-        if (!DishTypes.includes(dishType)) {
+        if (!Object.values(DishTypes).includes(dishType)) {
             return false;
         }
         if (player.getNetWorth() < dishType.build_cost) {
@@ -390,7 +415,7 @@ class Game {
         return true;
     }
 
-    currentPlayerRemoveDishCard(dishIndex) {
+    currentPlayerRemoveDishCard(dishIndex: number): boolean {
         const player = this.getCurrentPlayer();
         if (!player) {
             return false;
@@ -400,9 +425,9 @@ class Game {
 
     /**
      * For testing purposes only
-     * @returns {Object} - Game state summary
+     * @returns Game state summary
      */
-    getGameState() {
+    getGameState(): GameState {
         return {
             id: this.id,
             status: this.status,
@@ -420,34 +445,34 @@ class Game {
                 drawPileCount: this.npcDoggos.drawPile.length
             },
             storeMarket: {
-                visible: this.storeMarket.visible,
+                visible: this.storeMarket.visible.map(store => store.toResponse()),
                 drawPileCount: this.storeMarket.drawPile.length
             }
         };
     }
 
-    getWaitingRoomSummary() {
-        return JSON.stringify(Object.entries(this.players).reduce((acc, [playerId, player]) => { 
+    getWaitingRoomSummary(): string {
+        return JSON.stringify(Object.entries(this.players).reduce((acc: Record<string, any>, [playerId, player]) => { 
             acc[this.playerIdToSimpleId[playerId]] = player.getWaitingRoomSummary();
             return acc;
         }, {}));
     }
 
-    toResponse() {
+    toResponse(): string {
         return JSON.stringify({
             id: this.id,
             status: this.status,
             requiredPlayers: this.requiredPlayers,
             // simple ids are for client-side use
-            players: Object.entries(this.players).reduce((acc, [playerId, player]) => { 
+            players: Object.entries(this.players).reduce((acc: Record<string, any>, [playerId, player]) => { 
                 acc[this.playerIdToSimpleId[playerId].toString()] = player.toResponse();
                 return acc;
             }, {}),
             playerOrder: this.playerOrder.map(playerId => this.playerIdToSimpleId[playerId].toString()),
             currentPlayerIndex: this.currentPlayerIndex,
             npcDoggos: {
-                visible: this.npcDoggos.visible.map(doggo => doggo.id),
-                discardPile: this.npcDoggos.discardPile.map(doggo => doggo.id),
+                visible: this.npcDoggos.visible.map((doggo: any) => doggo.id),
+                discardPile: this.npcDoggos.discardPile.map((doggo: any) => doggo.id),
                 extraMoney: this.npcDoggos.extraMoney
             },
             storeMarket: {
@@ -457,6 +482,4 @@ class Game {
             createdAt: this.createdAt
         });
     }
-}
-
-module.exports = Game;
+} 

@@ -7,4 +7,5 @@ node_modules/
 
 # Local files
 local_files/
+dist/
 .DS_Store

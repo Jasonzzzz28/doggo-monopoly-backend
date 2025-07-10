@@ -1,5 +1,7 @@
-const StoreTypes = require('./storeTypes');
-const DoggoCards = Object.freeze({
+import { DoggoCard, StoreType } from '../types';
+import { StoreTypes } from './storeTypes';
+
+export const DoggoCards: Record<string, DoggoCard> = Object.freeze({
     GOLDEN_RETRIEVER: Object.freeze({
         id: 'doggo_001',
         name: 'Golden Retriever',
@@ -164,26 +166,20 @@ const DoggoCards = Object.freeze({
 
 /**
  * Get a specific doggo card by ID
- * @param {string} cardId - The card ID to look up
- * @returns {Object|null} The card object or null if not found
+ * @param cardId - The card ID to look up
+ * @returns The card object or null if not found
  */
-function getDoggoCard(cardId) {
+export function getDoggoCard(cardId: string): DoggoCard | null {
     return Object.values(DoggoCards).find(card => card.id === cardId) || null;
 }
 
 /**
  * Get multiple random doggo cards
- * @param {number} count - Number of cards to get
- * @returns {Array} Array of random card objects
+ * @param count - Number of cards to get
+ * @returns Array of random card objects
  */
-function getRandomDoggoCards(count) {
+export function getRandomDoggoCards(count: number): DoggoCard[] {
     const cards = Object.values(DoggoCards);
     const shuffled = [...cards].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, count);
-}
-
-module.exports = {
-    DoggoCards,
-    getDoggoCard,
-    getRandomDoggoCards
-}; 
+} 

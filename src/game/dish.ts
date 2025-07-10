@@ -1,32 +1,39 @@
-const DishTypes = require('./dishTypes');
+import { DishType } from '../types';
 
-class Dish {
-    constructor(type, cardId=null) {
+export class Dish {
+    private type: DishType;
+    private cardId: string | null;
+
+    constructor(type: DishType, cardId: string | null = null) {
         this.type = type;
         this.cardId = cardId;
     }
-    getType() {
+
+    getType(): DishType {
         return this.type;
     }
-    getCardId() {
+
+    getCardId(): string | null {
         return this.cardId;
     }
-    getCost() {
+
+    getCost(): number {
         return this.type.build_cost;
     }
-    getIncome() {
+
+    getIncome(): number {
         return this.type.income;
     }
-    getSpecialEffect() {
+
+    getSpecialEffect(): string {
         return this.type.special_effect;
     }
-    toResponse() {
+
+    toResponse(): { type: string; cardId: string | null } {
         return {
             type: this.type.type,
             // TODO: add cardId when we have cardId
             cardId: null
         };
     }
-}
-
-module.exports = Dish;
+} 

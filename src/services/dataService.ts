@@ -1,7 +1,9 @@
+import { GameDatabase } from '../types';
+
 /**
  * DataBase for managing active games
  * TODO: Implement datastore like redis for horizontal scaling
  */
-const dataBase = new Map();
+const dataBase: GameDatabase = new Map();
 
-module.exports = dataBase;
+export default dataBase; 

@@ -1,13 +1,14 @@
-const express = require('express');
-const { v4: uuidv4 } = require('uuid');
-const Game = require('../game/game.js');
-const dataBase = require('../services/dataService.js');
-const GameStatus = require('../game/gameStatus.js');
+import express, { Router, Request, Response, NextFunction } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import { Game } from '../game/game';
+import dataBase from '../services/dataService';
+import { GameStatus } from '../game/gameStatus';
+import { CreateGameRequest, CreateGameResponse, JoinGameRequest, JoinGameResponse } from '../types';
 
-const router = express.Router();
+const router = Router();
 
 //Uncomment to bypass CORS for local testing
-router.use((req, res, next) => {
+router.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -29,28 +30,31 @@ router.use((req, res, next) => {
  *   "gameId": "string"
  * }
  */
-router.post('/create-game', (req, res) => {
+router.post('/create-game', (req: Request, res: Response): void => {
     try {
         if (!req.body) {
-            return res.status(400).json({
+            res.status(400).json({
                 error: 'Missing request body'
             });
+            return;
         }
 
-        const { numberOfPlayers } = req.body;
+        const { numberOfPlayers }: CreateGameRequest = req.body;
 
         // Validate required fields
         if (!numberOfPlayers) {
-            return res.status(400).json({
+            res.status(400).json({
                 error: 'Missing required fields: numberOfPlayers'
             });
+            return;
         }
 
         // Validate numberOfPlayers is a reasonable number
         if (typeof numberOfPlayers !== 'number' || numberOfPlayers < 2 || numberOfPlayers > 6) {
-            return res.status(400).json({
+            res.status(400).json({
                 error: 'numberOfPlayers must be a number between 2 and 6'
             });
+            return;
         }
 
         // Generate unique IDs
@@ -64,9 +68,11 @@ router.post('/create-game', (req, res) => {
 
         console.log(`Game created: ${gameId} with ${numberOfPlayers} players`);
 
-        res.status(201).json({
+        const response: CreateGameResponse = {
             gameId: gameId
-        });
+        };
+
+        res.status(201).json(response);
 
     } catch (error) {
         console.error('Error creating game:', error);
@@ -84,38 +90,52 @@ router.post('/create-game', (req, res) => {
  * Status 200: Returns the game object
  * Status 404: Game not found
  */
-router.get('/game/:gameId', (req, res) => {
+router.get('/game/:gameId', (req: Request, res: Response): void => {
     const gameId = req.params.gameId;
-    const game = dataBase.get(gameId);
+    const game = dataBase.get(gameId) as Game;
     if (!game) {
-        return res.status(404).json({ error: 'Game not found' });
+        res.status(404).json({ error: 'Game not found' });
+        return;
     }
     res.status(200).json(game);
 });
 
-router.post('/game/:gameId/join', (req, res) => {
+router.post('/game/:gameId/join', (req: Request, res: Response): void => {
     const gameId = req.params.gameId;
-    const game = dataBase.get(gameId);
+    const game = dataBase.get(gameId) as Game;
     if (!game) {
-        return res.status(404).json({ error: 'Game not found' });
+        res.status(404).json({ error: 'Game not found' });
+        return;
     }
     if (game.status !== GameStatus.WAITING) {
-        return res.status(400).json({ error: 'Game has already started' });
+        res.status(400).json({ error: 'Game has already started' });
+        return;
     }
     if (game.isFull()) {
-        return res.status(400).json({ error: 'Game is full' });
+        res.status(400).json({ error: 'Game is full' });
+        return;
     }
-    let { playerName, avatar = null } = req.body;
+    const { playerName, avatar = null }: JoinGameRequest = req.body;
     const playerId = uuidv4();
 
-    if (!playerName || playerName.length === 0) {
-        playerName = "Player-" + String(game.playerOrder.length + 1);
-    }
-    const success = game.addPlayer(playerId, playerName, avatar);
+    const finalPlayerName = (!playerName || playerName.length === 0) 
+        ? "Player-" + String(game.playerOrder.length + 1)
+        : playerName;
+
+    const success = game.addPlayer(playerId, finalPlayerName, avatar);
     if (!success) {
-        return res.status(400).json({ error: 'Failed to add player' });
+        res.status(400).json({ error: 'Failed to add player' });
+        return;
     }
-    res.status(200).json({ playerId: playerId, playerSimpleId: game.playerIdToSimpleId[playerId], playerName: playerName, numberOfPlayers: game.requiredPlayers });
+
+    const response: JoinGameResponse = {
+        playerId: playerId,
+        playerSimpleId: game.playerIdToSimpleId[playerId],
+        playerName: finalPlayerName,
+        numberOfPlayers: game.requiredPlayers
+    };
+
+    res.status(200).json(response);
 });
 
 // // dev only
@@ -136,4 +156,4 @@ router.post('/game/:gameId/join', (req, res) => {
 //     }
 // });
 
-module.exports = router; 
+export default router; 

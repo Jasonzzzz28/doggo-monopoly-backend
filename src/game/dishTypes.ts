@@ -1,6 +1,6 @@
-const SpecialEffect = require('./specialEffect.js');
+import { DishType, SpecialEffect } from '../types';
 
-const DishTypes = Object.freeze({
+export const DishTypes: Record<string, DishType> = Object.freeze({
     LEVEL_1: Object.freeze({
         type: "level-1",
         name: "Basic Dish",
@@ -47,12 +47,9 @@ const DishTypes = Object.freeze({
     })
 });
 
-const dishTypeMapper = Object.freeze({
+export const dishTypeMapper: Record<string, DishType> = Object.freeze({
     "level-1": DishTypes.LEVEL_1,
     "level-2": DishTypes.LEVEL_2,
     "level-3": DishTypes.LEVEL_3,
     "level-4": DishTypes.LEVEL_4
-});
-
-// This line exports the `DishTypes` enum so that it can be imported and used in other files within the Node.js application.
-module.exports = { DishTypes, dishTypeMapper};
+}); 

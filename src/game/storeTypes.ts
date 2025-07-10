@@ -1,6 +1,6 @@
-const SpecialEffect = require('./specialEffect');
+import { StoreType, SpecialEffect } from '../types';
 
-const StoreTypes = Object.freeze({
+export const StoreTypes: Record<string, StoreType> = Object.freeze({
     TOY_SHOP: Object.freeze({
         type: "toy-shop",
         name: "Toy Shop",
@@ -133,7 +133,4 @@ const StoreTypes = Object.freeze({
         icon: "fas fa-beer",
         image: "dog-bar.jpg"
     }),
-
-});
-
-module.exports = {StoreTypes};
+}); 

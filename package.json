@@ -1,7 +1,10 @@
 {
   "scripts": {
     "test": "jest",
-    "dev": "node src/app.js"
+    "dev": "ts-node src/app.ts",
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev:watch": "ts-node-dev --respawn src/app.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -10,6 +13,15 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "jest": "^30.0.3"
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.19",
+    "@types/uuid": "^9.0.8",
+    "jest": "^30.0.3",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
   }
 }

@@ -1,19 +1,21 @@
-const dataBase = require('../services/dataService.js');
-const GameStatus = require('../game/gameStatus.js');
-const { dishTypeMapper } = require('../game/dishTypes.js');
-const Game = require('../game/game.js');
+import { Server, Socket } from 'socket.io';
+import { ConnectToGameData, StartGameData, PlayerBuyDishData, PlayerRemoveDishData, PlayerBuyStoreData, PlayerHostDoggoData } from '../types';
+import dataBase from '../services/dataService';
+import { GameStatus } from '../game/gameStatus';
+import { dishTypeMapper } from '../game/dishTypes';
+import { Game } from '../game/game';
 
 /**
  * Called when a player wants to join a game using a game code and name.
  * Adds the player to the game's player list and notifies all players in the room.
- * @param {object} io - The socket.io server instance
- * @param {object} socket - The socket for the joining player
- * @param {object} data - { gameId, playerId }
+ * @param io - The socket.io server instance
+ * @param socket - The socket for the joining player
+ * @param data - { gameId, playerId }
  */
-function connect_to_game(io, socket, data) {
+export function connect_to_game(io: Server, socket: Socket, data: ConnectToGameData): void {
     console.log('connect_to_game: ' + data);
     const { gameId, playerId } = data;
-    const game = dataBase.get(gameId);
+    const game = dataBase.get(gameId) as Game;
     if (!game) {
         socket.emit('error', { message: 'Game not found.' });
         console.log('Game not found.');
@@ -39,14 +41,14 @@ function connect_to_game(io, socket, data) {
 
 /**
  * Called by the host player to begin the game. Only allowed if all expected players have joined.
- * @param {object} io - The socket.io server instance
- * @param {object} socket - The socket for the host player
- * @param {object} data - { gameId, playerId }
+ * @param io - The socket.io server instance
+ * @param socket - The socket for the host player
+ * @param data - { gameId, playerId }
  */
-function start_game(io, socket, data) {
+export function start_game(io: Server, socket: Socket, data: StartGameData): void {
     console.log('start_game called: ' + data);
     const { gameId, playerId } = data;
-    const game = dataBase.get(gameId);
+    const game = dataBase.get(gameId) as Game;
     if (!game) {
         console.log('Start game: Game not found.');
         socket.emit('error', { message: 'Game not found.' });
@@ -78,12 +80,12 @@ function start_game(io, socket, data) {
 
 /**
  * Sends the current waiting room status to all players in the game room.
- * @param {object} io - The socket.io server instance
- * @param {string} gameId - The game room ID
+ * @param io - The socket.io server instance
+ * @param gameId - The game room ID
  */
-function waiting_room_update(io, gameId) {
+function waiting_room_update(io: Server, gameId: string): void {
     console.log('waiting_room_update: ' + gameId);
-    const game = dataBase.get(gameId);
+    const game = dataBase.get(gameId) as Game;
     if (!game) return;
     const summary = game.getWaitingRoomSummary();
     io.to(gameId).emit('waiting_room_update', summary);
@@ -91,35 +93,35 @@ function waiting_room_update(io, gameId) {
 
 /**
  * Notifies all players in the game room that the game has updated.
- * @param {object} io - The socket.io server instance
- * @param {string} gameId - The game room ID
+ * @param io - The socket.io server instance
+ * @param gameId - The game room ID
  */
-function game_update(io, gameId) {
-    const game = dataBase.get(gameId);
+function game_update(io: Server, gameId: string): void {
+    const game = dataBase.get(gameId) as Game;
     if (!game) return;
     io.to(gameId).emit('game_update', {
         game: game.toResponse()
     });
 }
 
-function player_buy_dish(io, socket, data) {
+export function player_buy_dish(io: Server, socket: Socket, data: PlayerBuyDishData): void {
     const { gameId, playerId, dishType } = data;
-    const game = dataBase.get(gameId);
+    const game = dataBase.get(gameId) as Game;
     if (!game) return;
     if (playerId !== game.getCurrentPlayerId()) {
         socket.emit('error', { message: 'Only the current player can buy dishes.' });
         return;
     }
-    const success = game.sellDishCardToCurrentPlayer(dishTypeMapper[dishType]);
+    const success = game.sellDishCardToCurrentPlayer(dishTypeMapper[dishType.type]);
     if (!success) {
         socket.emit('error', { message: 'Failed to buy dish.' });
     }
     game_update(io, gameId);
 }
 
-function player_remove_dish(io, socket, data) {
+export function player_remove_dish(io: Server, socket: Socket, data: PlayerRemoveDishData): void {
     const { gameId, playerId, dishIndex } = data;
-    const game = dataBase.get(gameId);
+    const game = dataBase.get(gameId) as Game;
     if (!game) return;
     if (playerId !== game.getCurrentPlayerId()) {
         socket.emit('error', { message: 'Only the current player can remove dishes.' });
@@ -132,9 +134,9 @@ function player_remove_dish(io, socket, data) {
     game_update(io, gameId);
 }
 
-function player_buy_store(io, socket, data) {
+export function player_buy_store(io: Server, socket: Socket, data: PlayerBuyStoreData): void {
     const { gameId, playerId, storeIndex } = data;
-    const game = dataBase.get(gameId);
+    const game = dataBase.get(gameId) as Game;
     if (!game) return;
     if (playerId !== game.getCurrentPlayerId()) {
         socket.emit('error', { message: 'Only the current player can buy stores.' });
@@ -145,16 +147,16 @@ function player_buy_store(io, socket, data) {
         socket.emit('error', { message: 'Store not found.' });
         return;
     }
-    const success = game.sellStoreCardToCurrentPlayer(store);
+    const success = game.sellStoreCardToCurrentPlayer(storeIndex);
     if (!success) {
         socket.emit('error', { message: 'Failed to buy store.' });
     }
     game_update(io, gameId);
 }
 
-function player_host_doggo(io, socket, data) {
+export function player_host_doggo(io: Server, socket: Socket, data: PlayerHostDoggoData): void {
     const { gameId, playerId, doggoIndex } = data;
-    const game = dataBase.get(gameId);
+    const game = dataBase.get(gameId) as Game;
     if (!game) return;
     if (playerId !== game.getCurrentPlayerId()) {
         socket.emit('error', { message: 'Only the current player can host doggos.' });
@@ -165,18 +167,9 @@ function player_host_doggo(io, socket, data) {
         socket.emit('error', { message: 'Doggo not found.' });
         return;
     }
-    const success = game.assignDoggoCardToCurrentPlayer(doggo);
+    const success = game.assignDoggoCardToCurrentPlayer(doggoIndex);
     if (!success) {
         socket.emit('error', { message: 'Failed to host doggo.' });
     }
     game_update(io, gameId);
-}
-
-module.exports = {
-    connect_to_game,
-    start_game,
-    player_buy_dish,
-    player_remove_dish,
-    player_buy_store,
-    player_host_doggo
-};
+} 
